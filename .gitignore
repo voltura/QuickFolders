@@ -368,3 +368,5 @@ FodyWeavers.xsd
 /QuickFolders.sha1
 /QuickFolders.sha256
 /QuickFolders.sha512
+*.exe
+/TODO.MD

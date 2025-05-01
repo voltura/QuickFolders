@@ -25,4 +25,6 @@ IF NOT EXIST %OUT% (
 ECHO Build complete. Final file size:
 FOR %%F IN (%OUT%) DO ECHO %%~zF bytes
 
+"C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
 ENDLOCAL
