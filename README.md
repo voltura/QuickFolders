@@ -8,16 +8,27 @@ Open folder by clicking on the folder in menu.
 
  [*Download latest release*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) 
 
+## Features
+- Quickly access your five most recent folders in taskbar.
+- Right-click on the icon in the taskbar to view the menu.
+- Open a folder by clicking on it in the menu.
+- Lightweight and easy to use.
+
+## Requirements
+- Windows 11 or later.
+
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/b1c8dc08-880d-4ab0-8231-b9d2bf1a4cc8)
 ![image](https://github.com/user-attachments/assets/8e1c5fd2-d39b-4bbf-ba3b-121a23006c32)
 ![image](https://github.com/user-attachments/assets/ea9b941c-2f01-4026-9bc8-bae71088a6fa)
 
+## Options
+- **Start with Windows**: Enable this option to start QuickFolders automatically when you log in to Windows.
 
 ## Installation
 Download QuickFolders.exe and run to start.
 
-### Run notes
+### First Run notes
 Press 'More info' link
 
 <img width="402" alt="image" src="https://github.com/user-attachments/assets/f7ea0116-d6f4-40f1-bf5c-9c03a7e84e38">

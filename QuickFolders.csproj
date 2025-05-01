@@ -45,6 +45,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="QuickFolders.exe">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

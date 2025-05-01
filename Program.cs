@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 static class P
 {
@@ -22,11 +23,17 @@ static class P
 
         ContextMenuStrip menu = new ContextMenuStrip();
         icon.ContextMenuStrip = menu;
+
         bool menuOpen = false;
 
-        icon.MouseClick += (s, e) =>
+        icon.MouseClick += (sender, e) =>
         {
-            if (menuOpen || e.Button != MouseButtons.Right)
+            if (menuOpen)
+            {
+                return;
+            }
+
+            if (e.Button != MouseButtons.Right)
             {
                 return;
             }
@@ -43,11 +50,14 @@ static class P
             }
 
             Array.Sort(files, (a, b) => b.LastWriteTime.CompareTo(a.LastWriteTime));
+
             menu.Items.Clear();
+
             ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB")
             {
                 Enabled = false
             };
+
             menu.Items.Add(header);
 
             foreach (FileInfo file in files)
@@ -56,16 +66,29 @@ static class P
                 {
                     IShellLink link = (IShellLink)new ShellLink();
                     ((IPersistFile)link).Load(file.FullName, 0);
+
                     StringBuilder target = new StringBuilder(260);
                     link.GetPath(target, target.Capacity, IntPtr.Zero, 0);
+
                     string path = target.ToString();
 
-                    if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || !Directory.Exists(path))
+                    if (string.IsNullOrWhiteSpace(path))
+                    {
+                        continue;
+                    }
+
+                    if (!Path.IsPathRooted(path))
+                    {
+                        continue;
+                    }
+
+                    if (!Directory.Exists(path))
                     {
                         continue;
                     }
 
                     ToolStripMenuItem item = new ToolStripMenuItem(path);
+
                     item.Click += delegate
                     {
                         try
@@ -89,7 +112,10 @@ static class P
                 }
             }
 
+            ToolStripMenuItem menuRoot = new ToolStripMenuItem("Menu");
+
             ToolStripMenuItem web = new ToolStripMenuItem("QuickFolders web site");
+
             web.Click += delegate
             {
                 try
@@ -100,34 +126,102 @@ static class P
                 {
                 }
             };
-            menu.Items.Add(web);
+
+            menuRoot.DropDownItems.Add(web);
+
+            ToolStripMenuItem startWithWindows = new ToolStripMenuItem("Start with Windows")
+            {
+                Checked = StartWithWindows,
+                CheckOnClick = true
+            };
+
+            startWithWindows.CheckedChanged += (s2, e2) =>
+            {
+                StartWithWindows = startWithWindows.Checked;
+            };
+
+            menuRoot.DropDownItems.Add(startWithWindows);
 
             ToolStripMenuItem close = new ToolStripMenuItem("Close");
+
             close.Click += delegate
             {
                 menu.Close();
             };
-            menu.Items.Add(close);
+
+            menuRoot.DropDownItems.Add(close);
 
             ToolStripMenuItem exit = new ToolStripMenuItem("Exit");
+
             exit.Click += delegate
             {
                 icon.Visible = false;
                 Application.Exit();
             };
-            menu.Items.Add(exit);
+
+            menuRoot.DropDownItems.Add(exit);
+
+            menu.Items.Add(menuRoot);
 
             menu.Show(Cursor.Position);
+
             menuOpen = true;
-            menu.Closed += delegate { menuOpen = false; };
+
+            menu.Closed += delegate
+            {
+                menuOpen = false;
+            };
         };
 
         Application.Run(new ApplicationContext());
     }
 
+    public static bool StartWithWindows
+    {
+        get
+        {
+            bool startWithWindows = false;
+
+            try
+            {
+                startWithWindows = Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\", Application.ProductName, null) != null;
+            }
+            catch
+            {
+            }
+
+            return startWithWindows;
+        }
+        set
+        {
+            try
+            {
+                using (RegistryKey registryKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                {
+                    if (value)
+                    {
+                        registryKey.SetValue(Application.ProductName, "\"" + Application.ExecutablePath + "\"");
+                    }
+                    else
+                    {
+                        if (registryKey.GetValue(Application.ProductName) != null)
+                        {
+                            registryKey.DeleteValue(Application.ProductName);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
     [ComImport]
     [Guid("00021401-0000-0000-C000-000000000046")]
-    private class ShellLink { }
+    private class ShellLink
+    {
+    }
 
     [ComImport]
     [Guid("000214F9-0000-0000-C000-000000000046")]
