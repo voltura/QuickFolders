@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickFolders", "QuickFolders.csproj", "{E527D084-70FC-AAC2-3DB8-92BD6201F140}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Debug|x86.ActiveCfg = Debug|x86
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Debug|x86.Build.0 = Debug|x86
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Release|x86.ActiveCfg = Release|x86
+		{E527D084-70FC-AAC2-3DB8-92BD6201F140}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D061E7E0-B516-4E3A-B554-4E9287D583E9}
+	EndGlobalSection
+EndGlobal
