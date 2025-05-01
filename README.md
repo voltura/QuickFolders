@@ -5,6 +5,9 @@ Windows 11 system tray area application that displays the five most recent folde
 
  [*Download latest release*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) 
 
+## Screenshot
+![image](https://github.com/user-attachments/assets/b1c8dc08-880d-4ab0-8231-b9d2bf1a4cc8)
+
 ## Installation
 Download QuickFolders.exe and run to start.
 
@@ -27,7 +30,7 @@ Press 'Run anyway' button
    
 ## Statistics
 [![Open issues](https://img.shields.io/github/issues/voltura/QuickFolders)](https://github.com/voltura/QuickFolders/issues)
-[![Website Status](https://img.shields.io/website?url=https%3A%2F%2Fvoltura.github.io%QuickFolders%2F)]()
+[![Website Status](https://img.shields.io/website?url=https://voltura.github.io/QuickFolders/)]()
 
 [![Number of programming langauges](https://img.shields.io/github/languages/count/voltura/QuickFolders)]()
 [![Top programming language](https://img.shields.io/github/languages/top/voltura/QuickFolders)]()
