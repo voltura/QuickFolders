@@ -1,8 +1,8 @@
 IDI_ICON1 ICON "icon.ico"
 
 1 VERSIONINFO
-FILEVERSION 1,0,0,0
-PRODUCTVERSION 1,0,0,0
+FILEVERSION 1,0,0,1
+PRODUCTVERSION 1,0,0,1
 FILEOS 0x4
 FILETYPE 0x1
 {
@@ -12,11 +12,11 @@ FILETYPE 0x1
     {
       VALUE "CompanyName", "Voltura AB"
       VALUE "FileDescription", "QuickFolders"
-      VALUE "FileVersion", "1.0.0.0"
+      VALUE "FileVersion", "1.0.0.1"
       VALUE "InternalName", "QuickFolders.exe"
       VALUE "OriginalFilename", "QuickFolders.exe"
       VALUE "ProductName", "QuickFolders"
-      VALUE "ProductVersion", "1.0.0.0"
+      VALUE "ProductVersion", "1.0.0.1"
       VALUE "LegalCopyright", "© 2025 Voltura AB"
     }
   }

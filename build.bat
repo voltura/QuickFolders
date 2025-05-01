@@ -6,6 +6,8 @@ SET SRC=Program.cs
 SET OUT=QuickFolders.exe
 SET RES=QuickFolders.res
 
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\rc.exe" QuickFolders.rc
+
 IF EXIST %OUT% (
     ECHO Cleaning up existing %OUT%...
     DEL /F /Q %OUT%
@@ -24,4 +26,3 @@ ECHO Build complete. Final file size:
 FOR %%F IN (%OUT%) DO ECHO %%~zF bytes
 
 ENDLOCAL
-
