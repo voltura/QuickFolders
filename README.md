@@ -8,8 +8,11 @@ Open folder by clicking on the folder in menu.
 
  [*Download latest release*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) 
 
-## Screenshot
+## Screenshots
 ![image](https://github.com/user-attachments/assets/b1c8dc08-880d-4ab0-8231-b9d2bf1a4cc8)
+![image](https://github.com/user-attachments/assets/8e1c5fd2-d39b-4bbf-ba3b-121a23006c32)
+![image](https://github.com/user-attachments/assets/ea9b941c-2f01-4026-9bc8-bae71088a6fa)
+
 
 ## Installation
 Download QuickFolders.exe and run to start.
