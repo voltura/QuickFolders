@@ -363,3 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 /QuickFolders.exe
 /obj/x86/Debug/net48/QuickFolders.AssemblyInfo.cs
+/QuickFolders.md5
+/QuickFolders.sfv
+/QuickFolders.sha1
+/QuickFolders.sha256
+/QuickFolders.sha512
