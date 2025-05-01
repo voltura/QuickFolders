@@ -11,6 +11,7 @@ using Microsoft.Win32;
 static class P
 {
     private static readonly Mutex _Mutex = new Mutex(true, "6E56B35E-17AB-4601-9D7C-52DE524B7A2D");
+    static Config _Config;
 
     [STAThread]
     static void Main()
@@ -19,6 +20,8 @@ static class P
         {
             return;
         }
+
+        _Config = Config.Load();
 
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
@@ -101,7 +104,49 @@ static class P
                     {
                         try
                         {
-                            Process.Start(path);
+                            if (!string.IsNullOrWhiteSpace(_Config.FolderActionCommand))
+                            {
+                                string command = _Config.FolderActionCommand.Replace("%1", "\"" + path + "\"");
+
+                                string executable;
+                                string arguments;
+
+                                if (command.StartsWith("\""))
+                                {
+                                    int endQuoteIndex = command.IndexOf('"', 1);
+
+                                    executable = command.Substring(1, endQuoteIndex - 1);
+                                    arguments = command.Substring(endQuoteIndex + 1).TrimStart();
+                                }
+                                else
+                                {
+                                    int spaceIndex = command.IndexOf(' ');
+
+                                    if (spaceIndex == -1)
+                                    {
+                                        executable = command;
+                                        arguments = "";
+                                    }
+                                    else
+                                    {
+                                        executable = command.Substring(0, spaceIndex);
+                                        arguments = command.Substring(spaceIndex + 1).TrimStart();
+                                    }
+                                }
+
+                                ProcessStartInfo startInfo = new ProcessStartInfo
+                                {
+                                    FileName = executable,
+                                    Arguments = arguments,
+                                    UseShellExecute = false
+                                };
+
+                                Process.Start(startInfo);
+                            }
+                            else
+                            {
+                                Process.Start(path);
+                            }
                         }
                         catch
                         {
@@ -142,6 +187,24 @@ static class P
                 Checked = StartWithWindows,
                 CheckOnClick = true
             };
+
+            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...");
+
+            folderAction.Click += delegate
+            {
+                string current = _Config.FolderActionCommand ?? "";
+
+                string input = Microsoft.VisualBasic.Interaction.InputBox("Enter command to open folder (use %1 for folder path):", "Folder Action", current);
+
+                if (input != null)
+                {
+                    _Config.FolderActionCommand = input;
+                    _Config.Save();
+                }
+            };
+
+            menuRoot.DropDownItems.Add(folderAction);
+
 
             startWithWindows.CheckedChanged += (s2, e2) =>
             {
@@ -267,5 +330,46 @@ static class P
         void Save([MarshalAs(UnmanagedType.LPWStr)] string pszFileName, bool fRemember);
         void SaveCompleted([MarshalAs(UnmanagedType.LPWStr)] string pszFileName);
         void GetCurFile([MarshalAs(UnmanagedType.LPWStr)] out string ppszFileName);
+    }
+}
+
+class Config
+{
+    public string FolderActionCommand;
+
+    public static string ConfigFilePath
+    {
+        get
+        {
+            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QuickFolders");
+            Directory.CreateDirectory(folder);
+
+            return Path.Combine(folder, "QuickFolders.config");
+        }
+    }
+
+    public static Config Load()
+    {
+        Config config = new Config();
+
+        if (File.Exists(ConfigFilePath))
+        {
+            string[] lines = File.ReadAllLines(ConfigFilePath);
+
+            foreach (string line in lines)
+            {
+                if (line.StartsWith("FolderActionCommand="))
+                {
+                    config.FolderActionCommand = line.Substring("FolderActionCommand=".Length);
+                }
+            }
+        }
+
+        return config;
+    }
+
+    public void Save()
+    {
+        File.WriteAllText(ConfigFilePath, "FolderActionCommand=" + (FolderActionCommand ?? "") + "\r\n");
     }
 }

@@ -9,6 +9,7 @@ SetCompressorDictSize 128
 !define COMPANY "Voltura AB"
 !define VERSION "1.0.0.2"
 !define INSTALLDIR "$LOCALAPPDATA\${APPNAME}"
+!define APPDATADIR "$APPDATA\${APPNAME}"
 
 OutFile "${APPNAME}-Setup.exe"
 Icon "icon.ico"
@@ -82,5 +83,7 @@ Section "Uninstall"
     DeleteRegKey HKCU "Software\QuickFolders"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Run\QuickFolders"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+	Delete "${APPDATADIR}\QuickFolders.config"
+	RMDir "${APPDATADIR}"
 	RMDir "$INSTDIR"
 SectionEnd
