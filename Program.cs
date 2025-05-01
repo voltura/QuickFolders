@@ -79,7 +79,7 @@ static class P
 
                     menu.Items.Add(item);
 
-                    if (menu.Items.Count == 5)
+                    if (menu.Items.Count == 6)
                     {
                         break;
                     }
