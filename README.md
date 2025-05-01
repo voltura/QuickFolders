@@ -20,11 +20,11 @@ Download QuickFolders.exe and run to start.
 ### Run notes
 Press 'More info' link
 
-<img width="402" alt="image" src="https://user-images.githubusercontent.com/2292809/155432419-b64a1b0a-7b3b-4d6f-9eb9-6d4a5744b922.png">
+<img width="402" alt="image" src="https://github.com/user-attachments/assets/f7ea0116-d6f4-40f1-bf5c-9c03a7e84e38">
 
 Press 'Run anyway' button
 
-<img width="402" alt="image" src="https://user-images.githubusercontent.com/2292809/155432464-47cb1240-adc4-4c4e-987e-4bffa3d48fce.png">
+<img width="402" alt="image" src="https://github.com/user-attachments/assets/6d632946-9804-4baa-aeb8-f21daf94bd43">
 
 
 ## Donations
