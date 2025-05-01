@@ -1,7 +1,7 @@
 ﻿# QuickFolders
 
 Quickly access your five most recent folders.
-Windows 11 system tray area application that displays the five most recent folders.
+Windows 11 system tray area application that displays the five most recent folders via right-click on icon in taskbar.
 
  [*Download latest release*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) 
 
