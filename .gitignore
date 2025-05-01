@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/QuickFolders.exe
+/obj/x86/Debug/net48/QuickFolders.AssemblyInfo.cs

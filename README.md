@@ -1,1 +1,40 @@
-# QuickFolders
+﻿# QuickFolders
+
+Quickly access your five most recent folders.
+Windows 11 system tray area application that displays the five most recent folders.
+
+ [*Download latest release*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) 
+
+## Installation
+Download QuickFolders.exe and run to start.
+
+### Run notes
+Press 'More info' link
+
+<img width="402" alt="image" src="https://user-images.githubusercontent.com/2292809/155432419-b64a1b0a-7b3b-4d6f-9eb9-6d4a5744b922.png">
+
+Press 'Run anyway' button
+
+<img width="402" alt="image" src="https://user-images.githubusercontent.com/2292809/155432464-47cb1240-adc4-4c4e-987e-4bffa3d48fce.png">
+
+
+## Donations
+*- QuickFolders is completely free and open source. Donations are very much appreciated!*
+
+[![Donate](https://img.shields.io/badge/donate_via-paypal_or_card-blue)](https://www.paypal.com/donate?hosted_button_id=7PN65YXN64DBG) __⟵__ _**Press here to donate!**_
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G2G74W5F8) __⟵__ _**Press here to buy me a coffee!**_
+   
+## Statistics
+[![Open issues](https://img.shields.io/github/issues/voltura/QuickFolders)](https://github.com/voltura/QuickFolders/issues)
+[![Website Status](https://img.shields.io/website?url=https%3A%2F%2Fvoltura.github.io%QuickFolders%2F)]()
+
+[![Number of programming langauges](https://img.shields.io/github/languages/count/voltura/QuickFolders)]()
+[![Top programming language](https://img.shields.io/github/languages/top/voltura/QuickFolders)]()
+[![Code size](https://img.shields.io/github/languages/code-size/voltura/QuickFolders)]()
+[![Number of repo forks](https://img.shields.io/github/forks/voltura/QuickFolders)]()
+[![Number of repo stars](https://img.shields.io/github/stars/voltura/QuickFolders)]()
+[![goto counter](https://img.shields.io/github/search/voltura/QuickFolders/goto)]()
+![GitHub last commit](https://img.shields.io/github/last-commit/voltura/QuickFolders?color=red)
+
+![Visitors](https://estruyf-github.azurewebsites.net/api/VisitorHit?user=volturaf&repo=QuickFolders&countColorcountColor&countColor=%235690f2)

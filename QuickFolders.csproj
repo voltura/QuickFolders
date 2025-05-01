@@ -1,10 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>AnyCPU;x86</Platforms>
+    <Title>QuickFolders</Title>
+    <Company>Voltura AB</Company>
+    <Authors>Voltura AB</Authors>
+    <Description>QuickFolders allows quick access to recently visited folders.</Description>
+    <Copyright>Copyright © 2025 Voltura AB</Copyright>
+    <PackageProjectUrl>https://voltura.github.io/QuickFolders</PackageProjectUrl>
+    <PackageIcon>QuickFolders.exe</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/voltura/QuickFolders</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>recent folders;windows taskbar;quick access</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -32,5 +43,16 @@
     <WarningLevel>9999</WarningLevel>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="QuickFolders.exe">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
