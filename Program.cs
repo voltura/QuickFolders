@@ -12,7 +12,7 @@ using System.Windows.Forms;
 static class P
 {
     private static readonly Mutex _Mutex = new Mutex(true, "6E56B35E-17AB-4601-9D7C-52DE524B7A2D");
-    static Config _Config;
+    private static Config _Config;
     private static readonly ToolStripRenderer DarkRenderer = new DarkMenuRenderer();
     private static readonly ToolStripRenderer DefaultRenderer = new ToolStripProfessionalRenderer();
 
