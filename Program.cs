@@ -1,17 +1,21 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Win32;
 
 static class P
 {
     private static readonly Mutex _Mutex = new Mutex(true, "6E56B35E-17AB-4601-9D7C-52DE524B7A2D");
     static Config _Config;
+    private static readonly ToolStripRenderer DarkRenderer = new DarkMenuRenderer();
+    private static readonly ToolStripRenderer DefaultRenderer = new ToolStripProfessionalRenderer();
 
     [STAThread]
     static void Main()
@@ -74,7 +78,8 @@ static class P
 
             ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.folder.png"),
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
+                Tag = "folder",
                 Enabled = false
             };
 
@@ -109,7 +114,8 @@ static class P
 
                     ToolStripMenuItem item = new ToolStripMenuItem(path)
                     {
-                        Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + menu.Items.Count + ".png")
+                        Image = ResourceHelper.GetEmbeddedImage(GetThemeImage(menu.Items.Count.ToString())),
+                        Tag = menu.Items.Count.ToString()
                     };
 
                     item.Click += delegate
@@ -179,12 +185,14 @@ static class P
 
             ToolStripMenuItem menuRoot = new ToolStripMenuItem("Menu")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.more.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("more")),
+                Tag = "more"
             };
 
             ToolStripMenuItem web = new ToolStripMenuItem("QuickFolders web site")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.link.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("link")),
+                Tag = "link"
             };
 
             web.Click += delegate
@@ -202,21 +210,23 @@ static class P
 
             ToolStripMenuItem startWithWindows = new ToolStripMenuItem("Start with Windows")
             {
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("bolt")),
                 Checked = StartWithWindows,
                 CheckOnClick = true
             };
 
-            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...") {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.folder.png")
+            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...")
+            {
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
+                Tag = "folder"
             };
 
             folderAction.Click += delegate
             {
                 string current = _Config.FolderActionCommand ?? "";
-
                 string input = Microsoft.VisualBasic.Interaction.InputBox("Enter command to open folder (use %1 for folder path):", "Folder Action", current);
 
-                if (input != null)
+                if (!string.IsNullOrWhiteSpace(input) && input != current)
                 {
                     _Config.FolderActionCommand = input;
                     _Config.Save();
@@ -225,6 +235,34 @@ static class P
 
             menuRoot.DropDownItems.Add(folderAction);
 
+            ToolStripMenuItem setDefaultAction = new ToolStripMenuItem("Set Default Folder Action")
+            {
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("exit")),
+                Tag = "exit"
+            };
+
+            setDefaultAction.Click += delegate
+            {
+                if (MessageBox.Show("Reset the folder action to default (no custom command)?", "Confirm Reset", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    _Config.FolderActionCommand = null;
+                    _Config.Save();
+                }
+            };
+
+            menuRoot.DropDownItems.Add(setDefaultAction);
+
+            menuRoot.DropDownOpening += (s, ee) =>
+            {
+                if (string.IsNullOrEmpty(_Config.FolderActionCommand))
+                {
+                    setDefaultAction.Enabled = false;
+                }
+                else
+                {
+                    setDefaultAction.Enabled = true;
+                }
+            };
 
             startWithWindows.CheckedChanged += (s2, e2) =>
             {
@@ -235,19 +273,57 @@ static class P
 
             ToolStripMenuItem theme = new ToolStripMenuItem("Theme")
             {
-                Enabled = false,
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.theme.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("theme")),
+                Tag = "theme"
             };
-            ToolStripMenuItem systemTheme = new ToolStripMenuItem("System") {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.system.png")
+            ToolStripMenuItem systemTheme = new ToolStripMenuItem("System")
+            {
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("system")),
+                Tag = "system",
+                Checked = _Config.Theme == "System"
             };
             ToolStripMenuItem darkTheme = new ToolStripMenuItem("Dark")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.darkmode.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("darkmode")),
+                Tag = "darkmode",
+                Checked = _Config.Theme == "Dark"
+
             };
             ToolStripMenuItem lightTheme = new ToolStripMenuItem("Light")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.lightmode.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("lightmode")),
+                Tag = "lightmode",
+                Checked = _Config.Theme == "Light"
+            };
+
+            darkTheme.Click += delegate
+            {
+                _Config.Theme = "Dark";
+                _Config.Save();
+                ApplyTheme(menu);
+                systemTheme.Checked = false;
+                lightTheme.Checked = false;
+                darkTheme.Checked = true;
+            };
+
+            lightTheme.Click += delegate
+            {
+                _Config.Theme = "Light";
+                _Config.Save();
+                ApplyTheme(menu);
+                systemTheme.Checked = false;
+                lightTheme.Checked = true;
+                darkTheme.Checked = false;
+            };
+
+            systemTheme.Click += delegate
+            {
+                _Config.Theme = "System";
+                _Config.Save();
+                ApplyTheme(menu);
+                systemTheme.Checked = true;
+                lightTheme.Checked = false;
+                darkTheme.Checked = false;
             };
 
             theme.DropDownItems.Add(systemTheme);
@@ -255,21 +331,11 @@ static class P
             theme.DropDownItems.Add(lightTheme);
 
             menuRoot.DropDownItems.Add(theme);
-            ToolStripMenuItem close = new ToolStripMenuItem("Close")
-            {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.exit.png")
-            };
-
-            close.Click += delegate
-            {
-                menu.Close();
-            };
-
-            menuRoot.DropDownItems.Add(close);
 
             ToolStripMenuItem exit = new ToolStripMenuItem("Exit")
             {
-                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.x.png")
+                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("x")),
+                Tag = "x"
             };
 
             exit.Click += delegate
@@ -282,6 +348,8 @@ static class P
 
             menu.Items.Add(menuRoot);
 
+            ApplyTheme(menu);
+
             menu.Show(Cursor.Position);
 
             menuOpen = true;
@@ -293,6 +361,111 @@ static class P
         };
 
         Application.Run(new ApplicationContext());
+    }
+
+    private static string GetThemeImage(string baseName)
+    {
+        string suffix = _Config.Theme == "Dark" ? "_dark" : "";
+
+        return "QuickFolders.Resources." + baseName + suffix + ".png";
+    }
+
+    class DarkMenuRenderer : ToolStripProfessionalRenderer
+    {
+        public DarkMenuRenderer() : base(new DarkColorTable())
+        {
+        }
+
+        protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+        {
+            using (Pen p = new Pen(Color.FromArgb(40, 40, 40), 3))
+            {
+                Rectangle rect = new Rectangle(Point.Empty, e.ToolStrip.Size);
+                rect.Width -= 1;
+                rect.Height -= 1;
+                e.Graphics.DrawRectangle(p, rect);
+            }
+        }
+    }
+
+    class DarkColorTable : ProfessionalColorTable
+    {
+        public override Color MenuItemSelected
+        {
+            get { return Color.FromArgb(40, 40, 40); }
+        }
+
+        public override Color MenuItemSelectedGradientBegin
+        {
+            get { return Color.FromArgb(40, 40, 40); }
+        }
+
+        public override Color MenuItemSelectedGradientEnd
+        {
+            get { return Color.FromArgb(40, 40, 40); }
+        }
+
+        public override Color MenuItemBorder
+        {
+            get { return Color.DarkGray; }
+        }
+
+        public override Color ToolStripBorder
+        {
+            get { return Color.FromArgb(40, 40, 40); }
+        }
+
+        public override Color MenuBorder
+        {
+            get { return Color.FromArgb(40, 40, 40); }
+        }
+    }
+
+    private static void ApplyTheme(ContextMenuStrip menu)
+    {
+        string suffix = _Config.Theme == "Dark" ? "_dark" : "";
+
+        menu.Renderer = (_Config.Theme == "Dark") ? DarkRenderer : DefaultRenderer;
+
+        foreach (ToolStripItem item in menu.Items)
+        {
+            ApplyThemeToMenuItem(item, suffix);
+        }
+    }
+
+    private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix)
+    {
+        ToolStripMenuItem menuItem = item as ToolStripMenuItem;
+
+        if (menuItem != null)
+        {
+            if (menuItem.Tag != null)
+            {
+                string baseName = menuItem.Tag.ToString();
+                menuItem.Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + baseName + suffix + ".png");
+            }
+
+            if (_Config.Theme == "Dark")
+            {
+                menuItem.BackColor = Color.FromArgb(32, 32, 32);
+                menuItem.ForeColor = Color.Gainsboro;
+            }
+            else if (_Config.Theme == "Light")
+            {
+                menuItem.BackColor = Color.WhiteSmoke;
+                menuItem.ForeColor = Color.Black;
+            }
+            else
+            {
+                menuItem.BackColor = SystemColors.Menu;
+                menuItem.ForeColor = SystemColors.MenuText;
+            }
+
+            foreach (ToolStripItem subItem in menuItem.DropDownItems)
+            {
+                ApplyThemeToMenuItem(subItem, suffix);
+            }
+        }
     }
 
     private static void Menu_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -412,7 +585,9 @@ static class P
 
 class Config
 {
-    public string FolderActionCommand;
+    public string FolderActionCommand = string.Empty;
+
+    public string Theme = "System";
 
     public static string ConfigFilePath
     {
@@ -427,19 +602,60 @@ class Config
 
     public static Config Load()
     {
+        if (!File.Exists(ConfigFilePath))
+        {
+            Config newConfig = new Config();
+            newConfig.Save();
+
+            return newConfig;
+        }
+
         Config config = new Config();
 
-        if (File.Exists(ConfigFilePath))
-        {
-            string[] lines = File.ReadAllLines(ConfigFilePath);
+        string[] lines = File.ReadAllLines(ConfigFilePath);
 
-            foreach (string line in lines)
+        foreach (string line in lines)
+        {
+            string trimmed = line.Trim();
+
+            if (string.IsNullOrEmpty(trimmed))
             {
-                if (line.StartsWith("FolderActionCommand="))
-                {
-                    config.FolderActionCommand = line.Substring("FolderActionCommand=".Length);
-                }
+                continue;
             }
+
+            if (trimmed.StartsWith("#"))
+            {
+                continue;
+            }
+
+            string[] parts = trimmed.Split(new[] { '=' }, 2);
+
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            string key = parts[0].Trim();
+            string value = parts[1].Trim();
+
+            switch (key)
+            {
+                case "FolderActionCommand":
+                    {
+                        config.FolderActionCommand = value;
+                        break;
+                    }
+                case "Theme":
+                    {
+                        config.Theme = value;
+                        break;
+                    }
+            }
+        }
+
+        if (string.IsNullOrEmpty(config.Theme))
+        {
+            config.Theme = "System";
         }
 
         return config;
@@ -447,7 +663,13 @@ class Config
 
     public void Save()
     {
-        File.WriteAllText(ConfigFilePath, "FolderActionCommand=" + (FolderActionCommand ?? "") + "\r\n");
+        List<string> lines = new List<string>
+        {
+            "FolderActionCommand=" + (FolderActionCommand ?? ""),
+            "Theme=" + (Theme ?? "System")
+        };
+
+        File.WriteAllLines(ConfigFilePath, lines);
     }
 }
 
@@ -457,12 +679,7 @@ static class ResourceHelper
     {
         using (Stream stream = typeof(P).Assembly.GetManifestResourceStream(resourceName))
         {
-            if (stream == null)
-            {
-                return null;
-            }
-
-            return Image.FromStream(stream);
+            return (stream == null) ? null : Image.FromStream(stream);
         }
     }
 }

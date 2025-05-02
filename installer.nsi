@@ -3,13 +3,14 @@ SetCompressorDictSize 128
 
 !include LogicLib.nsh
 !include nsDialogs.nsh
-!insertmacro NSD_FUNCTION_INIFILE
 
 !define APPNAME "QuickFolders"
 !define COMPANY "Voltura AB"
-!define VERSION "1.0.0.2"
+!define VERSION "1.0.0.3"
 !define INSTALLDIR "$LOCALAPPDATA\${APPNAME}"
 !define APPDATADIR "$APPDATA\${APPNAME}"
+
+Var /GLOBAL StartWithWindowsState
 
 OutFile "${APPNAME}-Setup.exe"
 Icon "icon.ico"
@@ -18,9 +19,8 @@ InstallDir "${INSTALLDIR}"
 RequestExecutionLevel user
 
 Name "${APPNAME} ${VERSION}"
-InstallDirRegKey HKCU "Software\QuickFolders" "Install_Dir"
 
-Page custom nsDialogsIO UpdateINIState
+Page custom StartDialog StartDialogLeave
 Page instfiles
 
 UninstPage uninstConfirm
@@ -42,11 +42,27 @@ Function un.KillRunningApp
 	done:
 FunctionEnd
 
-Function nsDialogsIO
-	InitPluginsDir
-	File /oname=$PLUGINSDIR\io.ini ".\installer.ini"
-		StrCpy $0 $PLUGINSDIR\io.ini
-	Call CreateDialogFromINI
+Var /GLOBAL checkbox
+
+Function StartDialog
+    nsDialogs::Create 1018
+    Pop $0
+    ${NSD_CreateLabel} 10u 5u 100% 10u "QuickFolders will be installed on your computer."
+    Pop $1
+    ${NSD_CreateLabel} 10u 25u 100% 10u "You can choose if QuickFolders should start automatically"
+    Pop $1
+    ${NSD_CreateLabel} 10u 35u 100% 10u "with Windows when you log in."
+    Pop $1
+    ${NSD_CreateCheckbox} 10u 55u 100% 8u "Start with Windows"
+    Pop $checkbox
+    ${NSD_Check} $checkbox
+    ${NSD_CreateLabel} 10u 95u 100% 10u "Click Install to continue."
+    Pop $1
+    nsDialogs::Show
+FunctionEnd
+
+Function StartDialogLeave
+    ${NSD_GetState} $checkbox $StartWithWindowsState
 FunctionEnd
 
 Section "Install"
@@ -61,18 +77,12 @@ Section "Install"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$INSTDIR\QuickFolders.exe"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSION}"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "${COMPANY}"
-    ReadINIStr $0 "$PLUGINSDIR\io.ini" "Field 1" "State"
-    ReadINIStr $1 "$PLUGINSDIR\io.ini" "Field 2" "State"
-    StrCmp $0 "1" startWithWindows
-    Goto done
-    startWithWindows:
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "QuickFolders" "$INSTDIR\QuickFolders.exe"
-    done:
-    StrCmp $1 "1" launchApp
-    Goto done2
-    launchApp:
-    Exec "$INSTDIR\QuickFolders.exe"
-    done2:
+	StrCmp $StartWithWindowsState 1 startWithWindows
+	Goto done
+	startWithWindows:
+	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "QuickFolders" "$INSTDIR\QuickFolders.exe"
+	done:
+	Exec "$INSTDIR\QuickFolders.exe"
 SectionEnd
 
 Section "Uninstall"
@@ -83,7 +93,9 @@ Section "Uninstall"
     DeleteRegKey HKCU "Software\QuickFolders"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Run\QuickFolders"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+	MessageBox MB_YESNO|MB_ICONQUESTION "Do you also want to remove QuickFolders settings?" IDNO skipRemove
 	Delete "${APPDATADIR}\QuickFolders.config"
 	RMDir "${APPDATADIR}"
+	skipRemove:
 	RMDir "$INSTDIR"
 SectionEnd
