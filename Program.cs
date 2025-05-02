@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -32,7 +32,15 @@ static class P
             Visible = true
         };
 
-        ContextMenuStrip menu = new ContextMenuStrip();
+        ContextMenuStrip menu = new ContextMenuStrip
+        {
+            ShowCheckMargin = false,
+            ShowImageMargin = true
+        };
+
+        menu.PreviewKeyDown += Menu_PreviewKeyDown;
+        menu.KeyDown += Menu_KeyDown;
+
         icon.ContextMenuStrip = menu;
 
         bool menuOpen = false;
@@ -66,6 +74,7 @@ static class P
 
             ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB")
             {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.folder.png"),
                 Enabled = false
             };
 
@@ -98,7 +107,10 @@ static class P
                         continue;
                     }
 
-                    ToolStripMenuItem item = new ToolStripMenuItem(path);
+                    ToolStripMenuItem item = new ToolStripMenuItem(path)
+                    {
+                        Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + menu.Items.Count + ".png")
+                    };
 
                     item.Click += delegate
                     {
@@ -165,9 +177,15 @@ static class P
                 }
             }
 
-            ToolStripMenuItem menuRoot = new ToolStripMenuItem("Menu");
+            ToolStripMenuItem menuRoot = new ToolStripMenuItem("Menu")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.more.png")
+            };
 
-            ToolStripMenuItem web = new ToolStripMenuItem("QuickFolders web site");
+            ToolStripMenuItem web = new ToolStripMenuItem("QuickFolders web site")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.link.png")
+            };
 
             web.Click += delegate
             {
@@ -188,7 +206,9 @@ static class P
                 CheckOnClick = true
             };
 
-            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...");
+            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...") {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.folder.png")
+            };
 
             folderAction.Click += delegate
             {
@@ -213,7 +233,32 @@ static class P
 
             menuRoot.DropDownItems.Add(startWithWindows);
 
-            ToolStripMenuItem close = new ToolStripMenuItem("Close");
+            ToolStripMenuItem theme = new ToolStripMenuItem("Theme")
+            {
+                Enabled = false,
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.theme.png")
+            };
+            ToolStripMenuItem systemTheme = new ToolStripMenuItem("System") {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.system.png")
+            };
+            ToolStripMenuItem darkTheme = new ToolStripMenuItem("Dark")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.darkmode.png")
+            };
+            ToolStripMenuItem lightTheme = new ToolStripMenuItem("Light")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.lightmode.png")
+            };
+
+            theme.DropDownItems.Add(systemTheme);
+            theme.DropDownItems.Add(darkTheme);
+            theme.DropDownItems.Add(lightTheme);
+
+            menuRoot.DropDownItems.Add(theme);
+            ToolStripMenuItem close = new ToolStripMenuItem("Close")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.exit.png")
+            };
 
             close.Click += delegate
             {
@@ -222,7 +267,10 @@ static class P
 
             menuRoot.DropDownItems.Add(close);
 
-            ToolStripMenuItem exit = new ToolStripMenuItem("Exit");
+            ToolStripMenuItem exit = new ToolStripMenuItem("Exit")
+            {
+                Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources.x.png")
+            };
 
             exit.Click += delegate
             {
@@ -245,6 +293,35 @@ static class P
         };
 
         Application.Run(new ApplicationContext());
+    }
+
+    private static void Menu_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+    {
+        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9)
+        {
+            e.IsInputKey = true;
+        }
+    }
+
+    private static void Menu_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9)
+        {
+            int index = e.KeyCode - Keys.D1 + 1;
+
+            ContextMenuStrip menu = sender as ContextMenuStrip;
+
+            if (menu != null && index < menu.Items.Count)
+            {
+                ToolStripItem item = menu.Items[index];
+
+                if (item != null && item.Enabled)
+                {
+                    item.PerformClick();
+                    e.Handled = true;
+                }
+            }
+        }
     }
 
     public static bool StartWithWindows
@@ -371,5 +448,21 @@ class Config
     public void Save()
     {
         File.WriteAllText(ConfigFilePath, "FolderActionCommand=" + (FolderActionCommand ?? "") + "\r\n");
+    }
+}
+
+static class ResourceHelper
+{
+    public static Image GetEmbeddedImage(string resourceName)
+    {
+        using (Stream stream = typeof(P).Assembly.GetManifestResourceStream(resourceName))
+        {
+            if (stream == null)
+            {
+                return null;
+            }
+
+            return Image.FromStream(stream);
+        }
     }
 }

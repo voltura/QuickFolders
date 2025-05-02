@@ -49,6 +49,40 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Resources\1.png" />
+    <None Remove="Resources\2.png" />
+    <None Remove="Resources\3.png" />
+    <None Remove="Resources\4.png" />
+    <None Remove="Resources\5.png" />
+    <None Remove="Resources\darkmode.png" />
+    <None Remove="Resources\exit.png" />
+    <None Remove="Resources\folder.png" />
+    <None Remove="Resources\lightmode.png" />
+    <None Remove="Resources\link.png" />
+    <None Remove="Resources\more.png" />
+    <None Remove="Resources\system.png" />
+    <None Remove="Resources\theme.png" />
+    <None Remove="Resources\x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\1.png" />
+    <EmbeddedResource Include="Resources\2.png" />
+    <EmbeddedResource Include="Resources\3.png" />
+    <EmbeddedResource Include="Resources\4.png" />
+    <EmbeddedResource Include="Resources\5.png" />
+    <EmbeddedResource Include="Resources\darkmode.png" />
+    <EmbeddedResource Include="Resources\exit.png" />
+    <EmbeddedResource Include="Resources\folder.png" />
+    <EmbeddedResource Include="Resources\lightmode.png" />
+    <EmbeddedResource Include="Resources\link.png" />
+    <EmbeddedResource Include="Resources\more.png" />
+    <EmbeddedResource Include="Resources\system.png" />
+    <EmbeddedResource Include="Resources\theme.png" />
+    <EmbeddedResource Include="Resources\x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
