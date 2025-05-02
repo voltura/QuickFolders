@@ -2,10 +2,12 @@
 
 Quickly access your five most recent folders!
 
+[View on GitHub](https://github.com/voltura/QuickFolders) · [Browse All Releases](https://github.com/voltura/QuickFolders/releases)
+
 QuickFolders is a Windows 11 system tray application that shows your five most recent folders with a simple right-click on the taskbar icon.  
 Open a folder instantly by clicking it or pressing keys 1–5.
 
-[*Download the latest version*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders-Setup.exe)
+[*Download the latest version (Installer)*](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders-Setup.exe)
 
 ---
 
