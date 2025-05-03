@@ -1,3 +1,4 @@
+<div style="background-color: rgb(33, 33, 33); color: rgb(255, 255, 245); padding: 20px">
 # QuickFolders
 
 Quickly access your five most recent folders — right from your system tray.
@@ -83,3 +84,4 @@ QuickFolders is free and open source. If you enjoy using it, you are welcome to 
 ![GitHub last commit](https://img.shields.io/github/last-commit/voltura/QuickFolders?color=red)
 
 ![Visitors](https://estruyf-github.azurewebsites.net/api/VisitorHit?user=volturaf&repo=QuickFolders&countColorcountColor&countColor=%235690f2)
+</div>
