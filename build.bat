@@ -7,7 +7,7 @@ SET OUT=QuickFolders.exe
 SET RES=QuickFolders.res
 SET VB="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dll"
 
-"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\rc.exe" QuickFolders.rc
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\rc.exe" QuickFolders.rc
 
 IF EXIST %OUT% (
     ECHO Cleaning up existing %OUT%...

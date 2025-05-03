@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Text;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -38,7 +39,8 @@ static class P
         ContextMenuStrip menu = new ContextMenuStrip
         {
             ShowCheckMargin = false,
-            ShowImageMargin = true
+            ShowImageMargin = true,
+            Font = SystemFonts.MenuFont
         };
 
         menu.PreviewKeyDown += Menu_PreviewKeyDown;
@@ -385,6 +387,14 @@ static class P
                 e.Graphics.DrawRectangle(p, rect);
             }
         }
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter;
+            Color textColor = Color.FromArgb(240, 240, 240);
+            TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle, textColor, flags);
+        }
     }
 
     class DarkColorTable : ProfessionalColorTable
@@ -443,7 +453,6 @@ static class P
                 string baseName = menuItem.Tag.ToString();
                 menuItem.Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + baseName + suffix + ".png");
             }
-
             if (_Config.Theme == "Dark")
             {
                 menuItem.BackColor = Color.FromArgb(32, 32, 32);
