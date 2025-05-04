@@ -58,6 +58,10 @@ IF NOT EXIST %OUT% (
 ECHO Build complete. Final file size:
 FOR %%F IN (%OUT%) DO ECHO %%~zF bytes
 
+ECHO Injecting application manifest to make application DPI aware.
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\mt.exe" -manifest app.manifest -outputresource:QuickFolders.exe;#1
+
+ECHO Creating installer
 "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 
 START QuickFolders-Setup.exe
