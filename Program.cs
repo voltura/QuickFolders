@@ -29,9 +29,14 @@ static class P
     private static readonly ToolStripRenderer DarkRenderer = new DarkMenuRenderer();
     private static readonly ToolStripRenderer DefaultRenderer = new ToolStripProfessionalRenderer();
 
+    [DllImport("uxtheme.dll", EntryPoint = "#135", SetLastError = true)]
+    private static extern bool AllowDarkModeForApp(bool allow);
+
     [STAThread]
     static void Main()
     {
+        AllowDarkModeForApp(true);
+
         if (!_Mutex.WaitOne(TimeSpan.Zero, true))
         {
             return;
@@ -514,16 +519,22 @@ static class P
     private static void ApplyTheme(DarkContextMenuStrip menu)
     {
         string suffix = _Config.Theme == "Dark" ? "_dark" : "";
+        string realSystemTheme = _Config.Theme == "Dark" ? "Dark" : "Light";
 
-        menu.Renderer = (_Config.Theme == "Dark") ? DarkRenderer : DefaultRenderer;
+        if (_Config.Theme == "System")
+        {
+            realSystemTheme = SystemThemeHelper.GetSystemTheme();
+        }
+
+        menu.Renderer = (realSystemTheme == "Dark") ? DarkRenderer : DefaultRenderer;
 
         foreach (ToolStripItem item in menu.Items)
         {
-            ApplyThemeToMenuItem(item, suffix);
+            ApplyThemeToMenuItem(item, suffix, realSystemTheme);
         }
     }
 
-    private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix)
+    private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix, string realSystemTheme)
     {
         DarkToolStripMenuItem menuItem = item as DarkToolStripMenuItem;
 
@@ -534,12 +545,12 @@ static class P
                 string baseName = menuItem.Tag.ToString();
                 menuItem.Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + baseName + suffix + ".png");
             }
-            if (_Config.Theme == "Dark")
+            if (realSystemTheme == "Dark")
             {
                 menuItem.BackColor = Color.FromArgb(32, 32, 32);
                 menuItem.ForeColor = Color.Gainsboro;
             }
-            else if (_Config.Theme == "Light")
+            else if (realSystemTheme == "Light")
             {
                 menuItem.BackColor = Color.WhiteSmoke;
                 menuItem.ForeColor = Color.Black;
@@ -552,7 +563,7 @@ static class P
 
             foreach (ToolStripItem subItem in menuItem.DropDownItems)
             {
-                ApplyThemeToMenuItem(subItem, suffix);
+                ApplyThemeToMenuItem(subItem, suffix, realSystemTheme);
             }
         }
     }
@@ -899,4 +910,43 @@ static class TaskbarMenuPositioner
     private static extern IntPtr SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
 
     private const uint ABM_GETTASKBARPOS = 5;
+}
+
+
+public static class SystemThemeHelper
+{
+    public static string GetSystemTheme()
+    {
+        try
+        {
+            const string key = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+
+            RegistryKey personalizeKey = Registry.CurrentUser.OpenSubKey(key);
+            if (personalizeKey != null)
+            {
+                object value = personalizeKey.GetValue("AppsUseLightTheme");
+
+                if (value != null && value is int)
+                {
+                    int lightTheme = (int)value;
+
+                    if (lightTheme == 0)
+                    {
+                        return "Dark";
+                    }
+                    else
+                    {
+                        return "Light";
+                    }
+                }
+
+                personalizeKey.Close();
+            }
+        }
+        catch
+        {
+        }
+
+        return "Light";
+    }
 }
