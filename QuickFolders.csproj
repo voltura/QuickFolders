@@ -1,136 +1,140 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
-    <Platforms>AnyCPU;x86</Platforms>
-    <Title>QuickFolders</Title>
-    <Company>Voltura AB</Company>
-    <Authors>Voltura AB</Authors>
-    <Description>QuickFolders allows quick access to recently visited folders.</Description>
-    <Copyright>Copyright © 2025 Voltura AB</Copyright>
-    <PackageProjectUrl>https://voltura.github.io/QuickFolders</PackageProjectUrl>
-    <PackageIcon>QuickFolders.exe</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/voltura/QuickFolders</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>recent folders;windows taskbar;quick access</PackageTags>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Platforms>AnyCPU;x86</Platforms>
+		<Title>QuickFolders</Title>
+		<Company>Voltura AB</Company>
+		<Authors>Voltura AB</Authors>
+		<Description>QuickFolders allows quick access to recently visited folders.</Description>
+		<Copyright>Copyright © 2025 Voltura AB</Copyright>
+		<PackageProjectUrl>https://voltura.github.io/QuickFolders</PackageProjectUrl>
+		<PackageIcon>QuickFolders.exe</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/voltura/QuickFolders</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>recent folders;windows taskbar;quick access</PackageTags>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>True</Optimize>
-    <DebugType>full</DebugType>
-    <WarningLevel>9999</WarningLevel>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+	<PropertyGroup>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-    <Optimize>True</Optimize>
-    <DebugType>full</DebugType>
-    <WarningLevel>9999</WarningLevel>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<Optimize>True</Optimize>
+		<DebugType>full</DebugType>
+		<WarningLevel>9999</WarningLevel>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-    <WarningLevel>9999</WarningLevel>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+		<Optimize>True</Optimize>
+		<DebugType>full</DebugType>
+		<WarningLevel>9999</WarningLevel>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <DebugType>full</DebugType>
-    <WarningLevel>9999</WarningLevel>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DebugType>full</DebugType>
+		<WarningLevel>9999</WarningLevel>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="AssemblyInfo.cs" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+		<DebugType>full</DebugType>
+		<WarningLevel>9999</WarningLevel>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Resources\1.png" />
-    <None Remove="Resources\1_dark.png" />
-    <None Remove="Resources\2.png" />
-    <None Remove="Resources\2_dark.png" />
-    <None Remove="Resources\3.png" />
-    <None Remove="Resources\3_dark.png" />
-    <None Remove="Resources\4.png" />
-    <None Remove="Resources\4_dark.png" />
-    <None Remove="Resources\5.png" />
-    <None Remove="Resources\5_dark.png" />
-    <None Remove="Resources\bolt.png" />
-    <None Remove="Resources\bolt_dark.png" />
-    <None Remove="Resources\darkmode.png" />
-    <None Remove="Resources\darkmode_dark.png" />
-    <None Remove="Resources\exit.png" />
-    <None Remove="Resources\exit_dark.png" />
-    <None Remove="Resources\folder.png" />
-    <None Remove="Resources\folder_dark.png" />
-    <None Remove="Resources\github.png" />
-    <None Remove="Resources\github_dark.png" />
-    <None Remove="Resources\lightmode.png" />
-    <None Remove="Resources\lightmode_dark.png" />
-    <None Remove="Resources\link.png" />
-    <None Remove="Resources\link_dark.png" />
-    <None Remove="Resources\more.png" />
-    <None Remove="Resources\more_dark.png" />
-    <None Remove="Resources\system.png" />
-    <None Remove="Resources\system_dark.png" />
-    <None Remove="Resources\theme.png" />
-    <None Remove="Resources\theme_dark.png" />
-    <None Remove="Resources\x.png" />
-    <None Remove="Resources\x_dark.png" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="AssemblyInfo.cs" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\1.png" />
-    <EmbeddedResource Include="Resources\1_dark.png" />
-    <EmbeddedResource Include="Resources\2.png" />
-    <EmbeddedResource Include="Resources\2_dark.png" />
-    <EmbeddedResource Include="Resources\3.png" />
-    <EmbeddedResource Include="Resources\3_dark.png" />
-    <EmbeddedResource Include="Resources\4.png" />
-    <EmbeddedResource Include="Resources\4_dark.png" />
-    <EmbeddedResource Include="Resources\5.png" />
-    <EmbeddedResource Include="Resources\5_dark.png" />
-    <EmbeddedResource Include="Resources\bolt.png" />
-    <EmbeddedResource Include="Resources\bolt_dark.png" />
-    <EmbeddedResource Include="Resources\darkmode.png" />
-    <EmbeddedResource Include="Resources\darkmode_dark.png" />
-    <EmbeddedResource Include="Resources\exit.png" />
-    <EmbeddedResource Include="Resources\exit_dark.png" />
-    <EmbeddedResource Include="Resources\folder.png" />
-    <EmbeddedResource Include="Resources\folder_dark.png" />
-    <EmbeddedResource Include="Resources\github.png" />
-    <EmbeddedResource Include="Resources\github_dark.png" />
-    <EmbeddedResource Include="Resources\lightmode.png" />
-    <EmbeddedResource Include="Resources\lightmode_dark.png" />
-    <EmbeddedResource Include="Resources\link.png" />
-    <EmbeddedResource Include="Resources\link_dark.png" />
-    <EmbeddedResource Include="Resources\more.png" />
-    <EmbeddedResource Include="Resources\more_dark.png" />
-    <EmbeddedResource Include="Resources\system.png" />
-    <EmbeddedResource Include="Resources\system_dark.png" />
-    <EmbeddedResource Include="Resources\theme.png" />
-    <EmbeddedResource Include="Resources\theme_dark.png" />
-    <EmbeddedResource Include="Resources\x.png" />
-    <EmbeddedResource Include="Resources\x_dark.png" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Resources\1.png" />
+		<None Remove="Resources\1_dark.png" />
+		<None Remove="Resources\2.png" />
+		<None Remove="Resources\2_dark.png" />
+		<None Remove="Resources\3.png" />
+		<None Remove="Resources\3_dark.png" />
+		<None Remove="Resources\4.png" />
+		<None Remove="Resources\4_dark.png" />
+		<None Remove="Resources\5.png" />
+		<None Remove="Resources\5_dark.png" />
+		<None Remove="Resources\bolt.png" />
+		<None Remove="Resources\bolt_dark.png" />
+		<None Remove="Resources\darkmode.png" />
+		<None Remove="Resources\darkmode_dark.png" />
+		<None Remove="Resources\exit.png" />
+		<None Remove="Resources\exit_dark.png" />
+		<None Remove="Resources\folder.png" />
+		<None Remove="Resources\folder_dark.png" />
+		<None Remove="Resources\github.png" />
+		<None Remove="Resources\github_dark.png" />
+		<None Remove="Resources\lightmode.png" />
+		<None Remove="Resources\lightmode_dark.png" />
+		<None Remove="Resources\link.png" />
+		<None Remove="Resources\link_dark.png" />
+		<None Remove="Resources\more.png" />
+		<None Remove="Resources\more_dark.png" />
+		<None Remove="Resources\system.png" />
+		<None Remove="Resources\system_dark.png" />
+		<None Remove="Resources\theme.png" />
+		<None Remove="Resources\theme_dark.png" />
+		<None Remove="Resources\x.png" />
+		<None Remove="Resources\x_dark.png" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Microsoft.VisualBasic" />
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\1.png" />
+		<EmbeddedResource Include="Resources\1_dark.png" />
+		<EmbeddedResource Include="Resources\2.png" />
+		<EmbeddedResource Include="Resources\2_dark.png" />
+		<EmbeddedResource Include="Resources\3.png" />
+		<EmbeddedResource Include="Resources\3_dark.png" />
+		<EmbeddedResource Include="Resources\4.png" />
+		<EmbeddedResource Include="Resources\4_dark.png" />
+		<EmbeddedResource Include="Resources\5.png" />
+		<EmbeddedResource Include="Resources\5_dark.png" />
+		<EmbeddedResource Include="Resources\bolt.png" />
+		<EmbeddedResource Include="Resources\bolt_dark.png" />
+		<EmbeddedResource Include="Resources\darkmode.png" />
+		<EmbeddedResource Include="Resources\darkmode_dark.png" />
+		<EmbeddedResource Include="Resources\exit.png" />
+		<EmbeddedResource Include="Resources\exit_dark.png" />
+		<EmbeddedResource Include="Resources\folder.png" />
+		<EmbeddedResource Include="Resources\folder_dark.png" />
+		<EmbeddedResource Include="Resources\github.png" />
+		<EmbeddedResource Include="Resources\github_dark.png" />
+		<EmbeddedResource Include="Resources\lightmode.png" />
+		<EmbeddedResource Include="Resources\lightmode_dark.png" />
+		<EmbeddedResource Include="Resources\link.png" />
+		<EmbeddedResource Include="Resources\link_dark.png" />
+		<EmbeddedResource Include="Resources\more.png" />
+		<EmbeddedResource Include="Resources\more_dark.png" />
+		<EmbeddedResource Include="Resources\system.png" />
+		<EmbeddedResource Include="Resources\system_dark.png" />
+		<EmbeddedResource Include="Resources\theme.png" />
+		<EmbeddedResource Include="Resources\theme_dark.png" />
+		<EmbeddedResource Include="Resources\x.png" />
+		<EmbeddedResource Include="Resources\x_dark.png" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="QuickFolders.exe">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Update="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<Reference Include="Microsoft.VisualBasic" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="QuickFolders.exe">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>

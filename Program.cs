@@ -9,6 +9,18 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Reflection;
+
+[assembly: AssemblyVersion("1.0.0.5")]
+[assembly: AssemblyFileVersion("1.0.0.5")]
+[assembly: AssemblyInformationalVersion("v1.0.0.5")]
+[assembly: AssemblyCompany("Voltura AB")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyCopyright("© 2025 Voltura AB")]
+[assembly: AssemblyDescription("Instantly access your five most recent folders from the system tray.")]
+[assembly: AssemblyProduct("QuickFolders")]
+[assembly: AssemblyTitle("QuickFolders")]
+[assembly: AssemblyMetadata("RepositoryUrl", "https://github.com/voltura/QuickFolders")]
 
 static class P
 {
@@ -77,7 +89,7 @@ static class P
 
             menu.Items.Clear();
 
-            ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB")
+            ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
                 Tag = "folder",
@@ -390,10 +402,26 @@ static class P
 
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
+            if (!e.Item.Enabled)
+            {
+                e.TextColor = Color.FromArgb(160, 160, 160);
+            }
             e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter;
             Color textColor = Color.FromArgb(240, 240, 240);
             TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle, textColor, flags);
+        }
+
+        protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+        {
+            if (!e.Item.Enabled)
+            {
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(32, 32, 32)), new Rectangle(Point.Empty, e.ToolStrip.Size));
+            }
+            else
+            {
+                base.OnRenderMenuItemBackground(e);
+            }
         }
     }
 
