@@ -48,7 +48,7 @@ static class P
             Visible = true
         };
 
-        ContextMenuStrip menu = new ContextMenuStrip
+        DarkContextMenuStrip menu = new DarkContextMenuStrip
         {
             ShowCheckMargin = false,
             ShowImageMargin = true,
@@ -89,7 +89,7 @@ static class P
 
             menu.Items.Clear();
 
-            ToolStripMenuItem header = new ToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
+            DarkToolStripMenuItem header = new DarkToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
                 Tag = "folder",
@@ -125,7 +125,7 @@ static class P
                         continue;
                     }
 
-                    ToolStripMenuItem item = new ToolStripMenuItem(path)
+                    DarkToolStripMenuItem item = new DarkToolStripMenuItem(path)
                     {
                         Image = ResourceHelper.GetEmbeddedImage(GetThemeImage(menu.Items.Count.ToString())),
                         Tag = menu.Items.Count.ToString()
@@ -196,13 +196,13 @@ static class P
                 }
             }
 
-            ToolStripMenuItem menuRoot = new ToolStripMenuItem("Menu")
+            DarkToolStripMenuItem menuRoot = new DarkToolStripMenuItem("Menu")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("more")),
                 Tag = "more"
             };
 
-            ToolStripMenuItem web = new ToolStripMenuItem("QuickFolders web site")
+            DarkToolStripMenuItem web = new DarkToolStripMenuItem("QuickFolders web site")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("link")),
                 Tag = "link"
@@ -221,14 +221,14 @@ static class P
 
             menuRoot.DropDownItems.Add(web);
 
-            ToolStripMenuItem startWithWindows = new ToolStripMenuItem("Start with Windows")
+            DarkToolStripMenuItem startWithWindows = new DarkToolStripMenuItem("Start with Windows")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("bolt")),
                 Checked = StartWithWindows,
                 CheckOnClick = true
             };
 
-            ToolStripMenuItem folderAction = new ToolStripMenuItem("Folder Action...")
+            DarkToolStripMenuItem folderAction = new DarkToolStripMenuItem("Folder Action...")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
                 Tag = "folder"
@@ -248,7 +248,7 @@ static class P
 
             menuRoot.DropDownItems.Add(folderAction);
 
-            ToolStripMenuItem setDefaultAction = new ToolStripMenuItem("Set Default Folder Action")
+            DarkToolStripMenuItem setDefaultAction = new DarkToolStripMenuItem("Set Default Folder Action")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("exit")),
                 Tag = "exit"
@@ -284,25 +284,25 @@ static class P
 
             menuRoot.DropDownItems.Add(startWithWindows);
 
-            ToolStripMenuItem theme = new ToolStripMenuItem("Theme")
+            DarkToolStripMenuItem theme = new DarkToolStripMenuItem("Theme")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("theme")),
                 Tag = "theme"
             };
-            ToolStripMenuItem systemTheme = new ToolStripMenuItem("System")
+            DarkToolStripMenuItem systemTheme = new DarkToolStripMenuItem("System")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("system")),
                 Tag = "system",
                 Checked = _Config.Theme == "System"
             };
-            ToolStripMenuItem darkTheme = new ToolStripMenuItem("Dark")
+            DarkToolStripMenuItem darkTheme = new DarkToolStripMenuItem("Dark")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("darkmode")),
                 Tag = "darkmode",
                 Checked = _Config.Theme == "Dark"
 
             };
-            ToolStripMenuItem lightTheme = new ToolStripMenuItem("Light")
+            DarkToolStripMenuItem lightTheme = new DarkToolStripMenuItem("Light")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("lightmode")),
                 Tag = "lightmode",
@@ -345,7 +345,7 @@ static class P
 
             menuRoot.DropDownItems.Add(theme);
 
-            ToolStripMenuItem exit = new ToolStripMenuItem("Exit")
+            DarkToolStripMenuItem exit = new DarkToolStripMenuItem("Exit")
             {
                 Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("x")),
                 Tag = "x"
@@ -383,6 +383,52 @@ static class P
         return "QuickFolders.Resources." + baseName + suffix + ".png";
     }
 
+    class DarkContextMenuStrip : ContextMenuStrip
+    {
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
+                return cp;
+            }
+        }
+    }
+
+    class DarkToolStripDropDownMenu : ToolStripDropDownMenu
+    {
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
+                return cp;
+            }
+        }
+    }
+
+    class DarkToolStripMenuItem : ToolStripMenuItem
+    {
+        public DarkToolStripMenuItem() : base() { }
+
+        public DarkToolStripMenuItem(string text) : base(text) { }
+
+        public DarkToolStripMenuItem(string text, Image image) : base(text, image) { }
+
+        public DarkToolStripMenuItem(string text, Image image, EventHandler onClick) : base(text, image, onClick) { }
+
+        public DarkToolStripMenuItem(string text, Image image, ToolStripItem[] dropDownItems) : base(text, image, dropDownItems) { }
+
+        protected override ToolStripDropDown CreateDefaultDropDown()
+        {
+            DarkToolStripDropDownMenu dropDown = new DarkToolStripDropDownMenu();
+            dropDown.OwnerItem = this; // fix crash
+            return dropDown;
+        }
+    }
+
     class DarkMenuRenderer : ToolStripProfessionalRenderer
     {
         public DarkMenuRenderer() : base(new DarkColorTable())
@@ -399,6 +445,7 @@ static class P
                 e.Graphics.DrawRectangle(p, rect);
             }
         }
+
 
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
@@ -464,7 +511,7 @@ static class P
         }
     }
 
-    private static void ApplyTheme(ContextMenuStrip menu)
+    private static void ApplyTheme(DarkContextMenuStrip menu)
     {
         string suffix = _Config.Theme == "Dark" ? "_dark" : "";
 
@@ -478,7 +525,7 @@ static class P
 
     private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix)
     {
-        ToolStripMenuItem menuItem = item as ToolStripMenuItem;
+        DarkToolStripMenuItem menuItem = item as DarkToolStripMenuItem;
 
         if (menuItem != null)
         {
@@ -524,7 +571,7 @@ static class P
         {
             int index = e.KeyCode - Keys.D1 + 1;
 
-            ContextMenuStrip menu = sender as ContextMenuStrip;
+            DarkContextMenuStrip menu = sender as DarkContextMenuStrip;
 
             if (menu != null && index < menu.Items.Count)
             {
