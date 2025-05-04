@@ -6,7 +6,7 @@ SetCompressorDictSize 128
 
 !define APPNAME "QuickFolders"
 !define COMPANY "Voltura AB"
-!define VERSION "1.0.0.4"
+!define VERSION "1.0.0.5"
 !define INSTALLDIR "$LOCALAPPDATA\${APPNAME}"
 !define APPDATADIR "$APPDATA\${APPNAME}"
 
