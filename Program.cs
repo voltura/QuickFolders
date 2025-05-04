@@ -424,7 +424,7 @@ static class P
         protected override ToolStripDropDown CreateDefaultDropDown()
         {
             DarkToolStripDropDownMenu dropDown = new DarkToolStripDropDownMenu();
-            dropDown.OwnerItem = this; // fix crash
+            dropDown.OwnerItem = this;
             return dropDown;
         }
     }
