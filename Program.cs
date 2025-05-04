@@ -423,6 +423,12 @@ static class P
                 base.OnRenderMenuItemBackground(e);
             }
         }
+
+        protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+        {
+            e.ArrowColor = Color.Gainsboro;
+            base.OnRenderArrow(e);
+        }
     }
 
     class DarkColorTable : ProfessionalColorTable
