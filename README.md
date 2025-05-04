@@ -33,9 +33,10 @@ With a simple right-click on the QuickFolders tray icon, you can instantly jump 
 
 ## Screenshots
 
-<img src="https://github.com/user-attachments/assets/c14db383-e770-4866-91bc-4e331c5c9a2e" width="560"/>
+<img src="https://github.com/user-attachments/assets/8c7cf926-39df-411e-bb75-439e908257d3" width="560"/>
 
-<img src="https://github.com/user-attachments/assets/51da9951-e30e-462c-ae8c-b5423e9a04c5" width="560"/>
+<img src="https://github.com/user-attachments/assets/2c4398fc-5631-450d-a4b9-f3cfcf3837f2" width="560"/>
+
 
 ---
 
