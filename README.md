@@ -1,6 +1,6 @@
 # QuickFolders
 
-Quickly access your five most recent folders — right from your system tray.
+Instantly access your five most recent folders from the system tray.
 
 [View on GitHub](https://github.com/voltura/QuickFolders) · [Browse All Releases](https://github.com/voltura/QuickFolders/releases)
 
