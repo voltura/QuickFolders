@@ -1,11 +1,13 @@
 # QuickFolders
 
-Instantly access your five most recent folders from the system tray.
+Instant access to your most recent folders — right from the system tray.
 
 [View on GitHub](https://github.com/voltura/QuickFolders) · [Browse All Releases](https://github.com/voltura/QuickFolders/releases)
 
-QuickFolders is a lightweight and modern Windows 11 system tray app that keeps your five most recent folders just one click away.  
-With a simple right-click on the QuickFolders tray icon, you can instantly jump to any of your recent folders.
+QuickFolders is a lightweight and modern Windows 11 tray app that keeps your five most recently used folders just one click away.
+Simply hover over the tray icon to instantly access and open any of them — no need to browse manually.
+
+Perfect for improving workflow and reducing repetitive navigation.
 
 [![Download the latest version](https://img.shields.io/github/v/release/voltura/QuickFolders?label=download%20the%20latest%20release&style=for-the-badge)](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders-Setup.exe)
 
@@ -15,12 +17,12 @@ With a simple right-click on the QuickFolders tray icon, you can instantly jump 
 
 ## Features
 
-- Quickly access your five most recent folders right from the system tray.
-- Open folders with a single click.
-- Optional automatic startup with Windows.
-- Supports custom folder actions.
-- Modern theme support — choose between light, dark, or follow system theme.
-- Clean and polished menu with icons.
+- Access your five most recent folders directly from the tray icon.
+- Open folders instantly with a single click.
+- Optionally start with Windows.
+- Define custom folder open actions.
+- Light and dark theme support — automatically follows system theme.
+- Clean and polished menu with icons and adjustable font size.
 - Runs quietly and efficiently in the background.
 
 ---
@@ -33,8 +35,9 @@ With a simple right-click on the QuickFolders tray icon, you can instantly jump 
 
 ## Screenshots
 
-<img src="https://github.com/user-attachments/assets/eeedceaf-6be2-4ef0-b4a8-2d03cc50c1fb" width="560"/>
+QuickFolders in action:
 
+<img src="https://github.com/user-attachments/assets/eeedceaf-6be2-4ef0-b4a8-2d03cc50c1fb" width="560"/>
 
 ---
 
@@ -42,28 +45,28 @@ With a simple right-click on the QuickFolders tray icon, you can instantly jump 
 
 ### Recommended
 
-- [Download QuickFolders-Setup.exe](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders-Setup.exe) and run it to install QuickFolders.  
-The app will start automatically after installation and appear in your system tray.
-
+- [Download QuickFolders-Setup.exe](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders-Setup.exe) and run it.  
+QuickFolders will start automatically after installation and appear in your system tray.
 
 ### Portable version
 
-- [Download QuickFolders.exe](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) and run it directly without installation.
+- [Download QuickFolders.exe](https://github.com/voltura/QuickFolders/releases/latest/download/QuickFolders.exe) and run it directly — no installation required.
 
 ---
 
-## First run
+## SmartScreen warning on first run
 
-Windows may show a SmartScreen warning the first time you run QuickFolders.
+The first time you run QuickFolders, Windows may show a SmartScreen warning.
 
 1. Click **More info**.
 2. Click **Run anyway**.
 
 ---
 
-## Support and Donations
+## Support and donations
 
-QuickFolders is free and open source. If you enjoy using it, you are welcome to support development:
+QuickFolders is free and open source.  
+If you find it helpful, consider supporting development:
 
 [![Donate](https://img.shields.io/badge/donate_via-paypal_or_card-blue)](https://www.paypal.com/donate?hosted_button_id=7PN65YXN64DBG)  
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G2G74W5F8)
@@ -73,12 +76,12 @@ QuickFolders is free and open source. If you enjoy using it, you are welcome to 
 ## Project status
 
 [![Open issues](https://img.shields.io/github/issues/voltura/QuickFolders)](https://github.com/voltura/QuickFolders/issues)
-[![Website Status](https://img.shields.io/website?url=https://voltura.github.io/QuickFolders/)]()
-[![Number of programming languages](https://img.shields.io/github/languages/count/voltura/QuickFolders)]()
-[![Top programming language](https://img.shields.io/github/languages/top/voltura/QuickFolders)]()
+[![Website status](https://img.shields.io/website?url=https://voltura.github.io/QuickFolders/)]()
+[![Languages](https://img.shields.io/github/languages/count/voltura/QuickFolders)]()
+[![Top language](https://img.shields.io/github/languages/top/voltura/QuickFolders)]()
 [![Code size](https://img.shields.io/github/languages/code-size/voltura/QuickFolders)]()
-[![Number of repo forks](https://img.shields.io/github/forks/voltura/QuickFolders)]()
-[![Number of repo stars](https://img.shields.io/github/stars/voltura/QuickFolders)]()
-![GitHub last commit](https://img.shields.io/github/last-commit/voltura/QuickFolders?color=red)
+[![Repo forks](https://img.shields.io/github/forks/voltura/QuickFolders)]()
+[![Repo stars](https://img.shields.io/github/stars/voltura/QuickFolders)]()
+![Last commit](https://img.shields.io/github/last-commit/voltura/QuickFolders?color=red)
 
 ![Visitors](https://estruyf-github.azurewebsites.net/api/VisitorHit?user=volturaf&repo=QuickFolders&countColorcountColor&countColor=%235690f2)
