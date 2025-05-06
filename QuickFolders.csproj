@@ -19,7 +19,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<LangVersion>5</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<AssemblyName>$(MSBuildProjectName)1</AssemblyName>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

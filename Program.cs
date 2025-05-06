@@ -22,59 +22,135 @@ using System.Reflection;
 [assembly: AssemblyTitle("QuickFolders")]
 [assembly: AssemblyMetadata("RepositoryUrl", "https://github.com/voltura/QuickFolders")]
 
-static class P
+static class Program
 {
-    private static readonly Mutex _Mutex = new Mutex(true, "6E56B35E-17AB-4601-9D7C-52DE524B7A2D");
     private static Config _Config;
+    private static readonly Mutex _Mutex = new Mutex(true, "6E56B35E-17AB-4601-9D7C-52DE524B7A2D");
     private static readonly ToolStripRenderer DarkRenderer = new DarkMenuRenderer();
     private static readonly ToolStripRenderer DefaultRenderer = new ToolStripProfessionalRenderer();
 
     [DllImport("uxtheme.dll", EntryPoint = "#135", SetLastError = true)]
     private static extern bool AllowDarkModeForApp(bool allow);
 
+    [DllImport("user32.dll")]
+    private static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
+
+    private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
+
     [STAThread]
     static void Main()
     {
-        AllowDarkModeForApp(true);
-
         if (!_Mutex.WaitOne(TimeSpan.Zero, true))
         {
             return;
         }
 
-        _Config = Config.Load();
-
+        AllowDarkModeForApp(true);
+        
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+
+        _Config = Config.Load();
 
         NotifyIcon icon = new NotifyIcon
         {
             Icon = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\explorer.exe")),
-            Visible = true
+            Visible = true,
+            Text = "QuickFolders"
         };
 
         DarkContextMenuStrip menu = new DarkContextMenuStrip
         {
             ShowCheckMargin = false,
             ShowImageMargin = true,
-            Font = SystemFonts.MenuFont
+            Font = GetScaledMenuFont()
         };
 
         menu.PreviewKeyDown += Menu_PreviewKeyDown;
         menu.KeyDown += Menu_KeyDown;
 
-        icon.ContextMenuStrip = menu;
-
-        bool menuOpen = false;
-
-        icon.MouseClick += (sender, e) =>
+        System.Windows.Forms.Timer mouseCheckTimer = new System.Windows.Forms.Timer
         {
-            if (menuOpen)
+            Interval = 200
+        };
+
+        System.Windows.Forms.Timer autoCloseTimer = new System.Windows.Forms.Timer
+        {
+            Interval = 2000
+        };
+
+        List<ToolStripDropDown> openSubMenus = new List<ToolStripDropDown>();
+
+        mouseCheckTimer.Tick += delegate
+        {
+            if (!menu.Visible)
             {
                 return;
             }
 
-            if (e.Button != MouseButtons.Right)
+            Point cursorPos = Cursor.Position;
+
+            if (menu.Bounds.Contains(cursorPos))
+            {
+                autoCloseTimer.Stop();
+
+                return;
+            }
+
+            foreach (ToolStripDropDown submenu in openSubMenus)
+            {
+                if (submenu.Bounds.Contains(cursorPos))
+                {
+                    autoCloseTimer.Stop();
+
+                    return;
+                }
+            }
+
+            if (!autoCloseTimer.Enabled)
+            {
+                autoCloseTimer.Start();
+            }
+        };
+
+        autoCloseTimer.Tick += delegate
+        {
+            autoCloseTimer.Stop();
+
+            if (!menu.Visible)
+            {
+                return;
+            }
+
+            Point cursorPos = Cursor.Position;
+
+            if (menu.Bounds.Contains(cursorPos))
+            {
+                return;
+            }
+
+            foreach (ToolStripDropDown submenu in openSubMenus)
+            {
+                if (submenu.Bounds.Contains(cursorPos))
+                {
+                    return;
+                }
+            }
+
+            menu.Close();
+        };
+
+        menu.Closed += delegate
+        {
+            mouseCheckTimer.Stop();
+            autoCloseTimer.Stop();
+        };
+
+        icon.MouseClick += (sender, e) =>
+        {
+            if (menu.Visible || e.Button != MouseButtons.Right)
             {
                 return;
             }
@@ -96,12 +172,13 @@ static class P
 
             DarkToolStripMenuItem header = new DarkToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
+                Image = GetThemeImage("folder"),
                 Tag = "folder",
                 Enabled = false
             };
 
             menu.Items.Add(header);
+            int added = 1;
 
             foreach (FileInfo file in files)
             {
@@ -115,25 +192,15 @@ static class P
 
                     string path = target.ToString();
 
-                    if (string.IsNullOrWhiteSpace(path))
-                    {
-                        continue;
-                    }
-
-                    if (!Path.IsPathRooted(path))
-                    {
-                        continue;
-                    }
-
-                    if (!Directory.Exists(path))
+                    if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || !Directory.Exists(path))
                     {
                         continue;
                     }
 
                     DarkToolStripMenuItem item = new DarkToolStripMenuItem(path)
                     {
-                        Image = ResourceHelper.GetEmbeddedImage(GetThemeImage(menu.Items.Count.ToString())),
-                        Tag = menu.Items.Count.ToString()
+                        Image = GetThemeImage(added.ToString()),
+                        Tag = added.ToString()
                     };
 
                     item.Click += delegate
@@ -142,59 +209,50 @@ static class P
                         {
                             if (!string.IsNullOrWhiteSpace(_Config.FolderActionCommand))
                             {
-                                string command = _Config.FolderActionCommand.Replace("%1", "\"" + path + "\"");
-
+                                string command = _Config.FolderActionCommand.Replace("%1", path);
                                 string executable;
                                 string arguments;
+                                int index;
 
                                 if (command.StartsWith("\""))
                                 {
-                                    int endQuoteIndex = command.IndexOf('"', 1);
-
-                                    executable = command.Substring(1, endQuoteIndex - 1);
-                                    arguments = command.Substring(endQuoteIndex + 1).TrimStart();
+                                    index = command.IndexOf('"', 1);
+                                    executable = command.Substring(1, index - 1);
+                                    arguments = command.Substring(index + 1);
                                 }
                                 else
                                 {
-                                    int spaceIndex = command.IndexOf(' ');
-
-                                    if (spaceIndex == -1)
-                                    {
-                                        executable = command;
-                                        arguments = "";
-                                    }
-                                    else
-                                    {
-                                        executable = command.Substring(0, spaceIndex);
-                                        arguments = command.Substring(spaceIndex + 1).TrimStart();
-                                    }
+                                    index = command.IndexOf(' ');
+                                    executable = command.Substring(0, index);
+                                    arguments = command.Substring(index + 1);
                                 }
 
-                                ProcessStartInfo startInfo = new ProcessStartInfo
+                                Process.Start(new ProcessStartInfo
                                 {
                                     FileName = executable,
                                     Arguments = arguments,
                                     UseShellExecute = false
-                                };
-
-                                Process.Start(startInfo);
+                                });
                             }
                             else
                             {
                                 Process.Start(path);
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            MessageBox.Show("Error opening folder: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     };
 
                     menu.Items.Add(item);
 
-                    if (menu.Items.Count == 6)
+                    if (added == 5)
                     {
                         break;
                     }
+
+                    added++;
                 }
                 catch
                 {
@@ -203,13 +261,15 @@ static class P
 
             DarkToolStripMenuItem menuRoot = new DarkToolStripMenuItem("Menu")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("more")),
+                Image = GetThemeImage("more"),
                 Tag = "more"
             };
+            
+            TrackSubMenu(menuRoot, openSubMenus);
 
             DarkToolStripMenuItem web = new DarkToolStripMenuItem("QuickFolders web site")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("link")),
+                Image = GetThemeImage("link"),
                 Tag = "link"
             };
 
@@ -228,26 +288,64 @@ static class P
 
             DarkToolStripMenuItem startWithWindows = new DarkToolStripMenuItem("Start with Windows")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("bolt")),
+                Image = GetThemeImage("bolt"),
                 Checked = StartWithWindows,
                 CheckOnClick = true
             };
 
             DarkToolStripMenuItem folderAction = new DarkToolStripMenuItem("Folder Action...")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("folder")),
+                Image = GetThemeImage("folder"),
                 Tag = "folder"
             };
 
             folderAction.Click += delegate
             {
                 string current = _Config.FolderActionCommand ?? "";
-                string input = Microsoft.VisualBasic.Interaction.InputBox("Enter command to open folder (use %1 for folder path):", "Folder Action", current);
+                string input = current;
 
-                if (!string.IsNullOrWhiteSpace(input) && input != current)
+                while (true)
                 {
+                    input = Microsoft.VisualBasic.Interaction.InputBox("Enter command to open folder (use %1 for folder path):", "Folder Action", input);
+
+                    if (string.IsNullOrWhiteSpace(input) || input == current)
+                    {
+                        return;
+                    }
+
+                    if (!input.Contains("%1"))
+                    {
+                        MessageBox.Show("Command must include %1 placeholder for the folder path.", "Invalid Command", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                        continue;
+                    }
+
+                    int index = input.IndexOf("%1");
+
+                    bool hasSpaceBefore = (index > 0 && input[index - 1] == ' ');
+
+                    if (!hasSpaceBefore)
+                    {
+                        input = input.Replace("%1", " %1");
+                        index++;
+                    }
+
+                    bool quoted = (index > 0 && input[index - 1] == '"') && (index + 2 < input.Length && input[index + 2] == '"');
+
+                    if (!quoted)
+                    {
+                        input = input.Replace("%1", "\"%1\"");
+                    }
+
+                    if (input == current)
+                    {
+                        return;
+                    }
+
                     _Config.FolderActionCommand = input;
                     _Config.Save();
+
+                    return;
                 }
             };
 
@@ -255,7 +353,7 @@ static class P
 
             DarkToolStripMenuItem setDefaultAction = new DarkToolStripMenuItem("Set Default Folder Action")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("exit")),
+                Image = GetThemeImage("exit"),
                 Tag = "exit"
             };
 
@@ -272,14 +370,7 @@ static class P
 
             menuRoot.DropDownOpening += (s, ee) =>
             {
-                if (string.IsNullOrEmpty(_Config.FolderActionCommand))
-                {
-                    setDefaultAction.Enabled = false;
-                }
-                else
-                {
-                    setDefaultAction.Enabled = true;
-                }
+                setDefaultAction.Enabled = !string.IsNullOrEmpty(_Config.FolderActionCommand);
             };
 
             startWithWindows.CheckedChanged += (s2, e2) =>
@@ -291,32 +382,36 @@ static class P
 
             DarkToolStripMenuItem theme = new DarkToolStripMenuItem("Theme")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("theme")),
+                Image = GetThemeImage("theme"),
                 Tag = "theme"
             };
-            DarkToolStripMenuItem systemTheme = new DarkToolStripMenuItem("System")
-            {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("system")),
-                Tag = "system",
-                Checked = _Config.Theme == "System"
-            };
-            DarkToolStripMenuItem darkTheme = new DarkToolStripMenuItem("Dark")
-            {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("darkmode")),
-                Tag = "darkmode",
-                Checked = _Config.Theme == "Dark"
 
-            };
-            DarkToolStripMenuItem lightTheme = new DarkToolStripMenuItem("Light")
+            TrackSubMenu(theme, openSubMenus);
+
+            DarkToolStripMenuItem systemTheme = new DarkToolStripMenuItem(Theme.System.ToString())
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("lightmode")),
+                Image = GetThemeImage("system"),
+                Tag = "system",
+                Checked = _Config.AppTheme == Theme.System
+            };
+
+            DarkToolStripMenuItem darkTheme = new DarkToolStripMenuItem(Theme.Dark.ToString())
+            {
+                Image = GetThemeImage("darkmode"),
+                Tag = "darkmode",
+                Checked = _Config.AppTheme == Theme.Dark
+            };
+
+            DarkToolStripMenuItem lightTheme = new DarkToolStripMenuItem(Theme.Light.ToString())
+            {
+                Image = GetThemeImage("lightmode"),
                 Tag = "lightmode",
-                Checked = _Config.Theme == "Light"
+                Checked = _Config.AppTheme == Theme.Light
             };
 
             darkTheme.Click += delegate
             {
-                _Config.Theme = "Dark";
+                _Config.AppTheme = Theme.Dark;
                 _Config.Save();
                 ApplyTheme(menu);
                 systemTheme.Checked = false;
@@ -326,7 +421,7 @@ static class P
 
             lightTheme.Click += delegate
             {
-                _Config.Theme = "Light";
+                _Config.AppTheme = Theme.Light;
                 _Config.Save();
                 ApplyTheme(menu);
                 systemTheme.Checked = false;
@@ -336,7 +431,7 @@ static class P
 
             systemTheme.Click += delegate
             {
-                _Config.Theme = "System";
+                _Config.AppTheme = Theme.System;
                 _Config.Save();
                 ApplyTheme(menu);
                 systemTheme.Checked = true;
@@ -350,9 +445,66 @@ static class P
 
             menuRoot.DropDownItems.Add(theme);
 
+
+            DarkToolStripMenuItem fontSize = new DarkToolStripMenuItem("Font Size")
+            {
+                Image = GetThemeImage("system"),
+                Tag = "system"
+            };
+
+            TrackSubMenu(fontSize, openSubMenus);
+
+            DarkToolStripMenuItem smallFont = new DarkToolStripMenuItem(FontSize.Small.ToString())
+            {
+                Checked = _Config.MenuFontSize == FontSize.Small,
+            };
+
+            DarkToolStripMenuItem mediumFont = new DarkToolStripMenuItem(FontSize.Medium.ToString())
+            {
+                Checked = _Config.MenuFontSize == FontSize.Medium
+            };
+
+            DarkToolStripMenuItem largeFont = new DarkToolStripMenuItem(FontSize.Large.ToString())
+            {
+                Checked = _Config.MenuFontSize == FontSize.Large
+            };
+
+            smallFont.Click += delegate
+            {
+                _Config.MenuFontSize = FontSize.Small;
+                _Config.Save();
+                smallFont.Checked = true;
+                mediumFont.Checked = false;
+                largeFont.Checked = false;
+            };
+
+            mediumFont.Click += delegate
+            {
+                _Config.MenuFontSize = FontSize.Medium;
+                _Config.Save();
+                smallFont.Checked = false;
+                mediumFont.Checked = true;
+                largeFont.Checked = false;
+            };
+
+            largeFont.Click += delegate
+            {
+                _Config.MenuFontSize = FontSize.Large;
+                _Config.Save();
+                smallFont.Checked = false;
+                mediumFont.Checked = false;
+                largeFont.Checked = true;
+            };
+
+            fontSize.DropDownItems.Add(smallFont);
+            fontSize.DropDownItems.Add(mediumFont);
+            fontSize.DropDownItems.Add(largeFont);
+
+            menuRoot.DropDownItems.Add(fontSize);
+
             DarkToolStripMenuItem exit = new DarkToolStripMenuItem("Exit")
             {
-                Image = ResourceHelper.GetEmbeddedImage(GetThemeImage("x")),
+                Image = GetThemeImage("x"),
                 Tag = "x"
             };
 
@@ -366,26 +518,64 @@ static class P
 
             menu.Items.Add(menuRoot);
 
+            menu.Font = GetScaledMenuFont();
             ApplyTheme(menu);
 
-            TaskbarMenuPositioner.ShowMenu(menu);
+            menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size));
 
-            menuOpen = true;
-
-            menu.Closed += delegate
-            {
-                menuOpen = false;
-            };
+            mouseCheckTimer.Start();
         };
 
         Application.Run(new ApplicationContext());
     }
 
-    private static string GetThemeImage(string baseName)
+    private static Font GetScaledMenuFont()
     {
-        string suffix = _Config.Theme == "Dark" ? "_dark" : "";
+        float scaleFactor;
 
-        return "QuickFolders.Resources." + baseName + suffix + ".png";
+        switch (_Config.MenuFontSize)
+        {
+            case FontSize.Small:
+                scaleFactor = 0.8f;
+                break;
+            case FontSize.Large:
+                scaleFactor = 1.2f;
+                break;
+            default:
+                return SystemFonts.MenuFont;
+        }
+
+        return new Font(SystemFonts.MenuFont.FontFamily, SystemFonts.MenuFont.Size * scaleFactor, SystemFonts.MenuFont.Style);
+    }
+
+    private static Image GetThemeImage(string baseName, string overrideSuffix = null)
+    {
+        string suffix = _Config.AppTheme == Theme.Dark ? "_dark" : "";
+        string resourceName = "QuickFolders.Resources." + baseName + (overrideSuffix ?? suffix) + ".png";
+
+        using (Stream stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName))
+        {
+            return stream == null ? null : Image.FromStream(stream);
+        }
+    }
+
+    private static void TrackSubMenu(DarkToolStripMenuItem item, List<ToolStripDropDown> submenus)
+    {
+        item.DropDownOpened += (s, e) =>
+        {
+            if (item.DropDown != null && !submenus.Contains(item.DropDown))
+            {
+                submenus.Add(item.DropDown);
+            }
+        };
+
+        item.DropDownClosed += (s, e) =>
+        {
+            if (item.DropDown != null)
+            {
+                submenus.Remove(item.DropDown);
+            }
+        };
     }
 
     class DarkContextMenuStrip : ContextMenuStrip
@@ -396,6 +586,7 @@ static class P
             {
                 CreateParams cp = base.CreateParams;
                 cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
+
                 return cp;
             }
         }
@@ -409,6 +600,7 @@ static class P
             {
                 CreateParams cp = base.CreateParams;
                 cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
+
                 return cp;
             }
         }
@@ -428,8 +620,11 @@ static class P
 
         protected override ToolStripDropDown CreateDefaultDropDown()
         {
-            DarkToolStripDropDownMenu dropDown = new DarkToolStripDropDownMenu();
-            dropDown.OwnerItem = this;
+            DarkToolStripDropDownMenu dropDown = new DarkToolStripDropDownMenu
+            {
+                OwnerItem = this
+            };
+
             return dropDown;
         }
     }
@@ -451,15 +646,15 @@ static class P
             }
         }
 
-
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
             if (!e.Item.Enabled)
             {
                 e.TextColor = Color.FromArgb(160, 160, 160);
             }
+
             e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-            TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter;
+            TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding;
             Color textColor = Color.FromArgb(240, 240, 240);
             TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle, textColor, flags);
         }
@@ -518,15 +713,16 @@ static class P
 
     private static void ApplyTheme(DarkContextMenuStrip menu)
     {
-        string suffix = _Config.Theme == "Dark" ? "_dark" : "";
-        string realSystemTheme = _Config.Theme == "Dark" ? "Dark" : "Light";
+        string suffix = _Config.AppTheme == Theme.Dark ? "_dark" : "";
+        Theme realSystemTheme = _Config.AppTheme == Theme.Dark ? Theme.Dark : Theme.Light;
 
-        if (_Config.Theme == "System")
+        if (_Config.AppTheme == Theme.System)
         {
-            realSystemTheme = SystemThemeHelper.GetSystemTheme();
+            realSystemTheme = GetSystemTheme();
         }
 
-        menu.Renderer = (realSystemTheme == "Dark") ? DarkRenderer : DefaultRenderer;
+        menu.Font = GetScaledMenuFont();
+        menu.Renderer = realSystemTheme == Theme.Dark ? DarkRenderer : DefaultRenderer;
 
         foreach (ToolStripItem item in menu.Items)
         {
@@ -534,7 +730,35 @@ static class P
         }
     }
 
-    private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix, string realSystemTheme)
+    public static Theme GetSystemTheme()
+    {
+        try
+        {
+            const string key = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+
+            RegistryKey personalizeKey = Registry.CurrentUser.OpenSubKey(key);
+            if (personalizeKey != null)
+            {
+                object value = personalizeKey.GetValue("AppsUseLightTheme");
+
+                if (value != null && value is int)
+                {
+                    int lightTheme = (int)value;
+
+                    return lightTheme == 0 ? Theme.Dark : Theme.Light;
+                }
+
+                personalizeKey.Close();
+            }
+        }
+        catch
+        {
+        }
+
+        return Theme.Light;
+    }
+
+    private static void ApplyThemeToMenuItem(ToolStripItem item, string suffix, Theme realSystemTheme)
     {
         DarkToolStripMenuItem menuItem = item as DarkToolStripMenuItem;
 
@@ -543,14 +767,15 @@ static class P
             if (menuItem.Tag != null)
             {
                 string baseName = menuItem.Tag.ToString();
-                menuItem.Image = ResourceHelper.GetEmbeddedImage("QuickFolders.Resources." + baseName + suffix + ".png");
+                menuItem.Image = GetThemeImage(baseName, suffix);
             }
-            if (realSystemTheme == "Dark")
+
+            if (realSystemTheme == Theme.Dark)
             {
                 menuItem.BackColor = Color.FromArgb(32, 32, 32);
                 menuItem.ForeColor = Color.Gainsboro;
             }
-            else if (realSystemTheme == "Light")
+            else if (realSystemTheme == Theme.Light)
             {
                 menuItem.BackColor = Color.WhiteSmoke;
                 menuItem.ForeColor = Color.Black;
@@ -683,11 +908,27 @@ static class P
     }
 }
 
-class Config
+public enum FontSize
+{
+    Small,
+    Medium,
+    Large
+}
+
+public enum Theme
+{
+    System,
+    Dark,
+    Light
+}
+
+public class Config
 {
     public string FolderActionCommand = string.Empty;
 
-    public string Theme = "System";
+    public Theme AppTheme = Theme.System;
+
+    public FontSize MenuFontSize = FontSize.Medium;
 
     public static string ConfigFilePath
     {
@@ -741,21 +982,23 @@ class Config
             switch (key)
             {
                 case "FolderActionCommand":
+                    config.FolderActionCommand = value;
+                    break;
+                case "AppTheme":
+                    Theme parsedTheme;
+                    if (Enum.TryParse(value, out parsedTheme))
                     {
-                        config.FolderActionCommand = value;
-                        break;
+                        config.AppTheme = parsedTheme;
                     }
-                case "Theme":
+                    break;
+                case "MenuFontSize":
+                    FontSize parsedSize;
+                    if (Enum.TryParse(value, out parsedSize))
                     {
-                        config.Theme = value;
-                        break;
+                        config.MenuFontSize = parsedSize;
                     }
+                    break;
             }
-        }
-
-        if (string.IsNullOrEmpty(config.Theme))
-        {
-            config.Theme = "System";
         }
 
         return config;
@@ -766,21 +1009,11 @@ class Config
         List<string> lines = new List<string>
         {
             "FolderActionCommand=" + (FolderActionCommand ?? ""),
-            "Theme=" + (Theme ?? "System")
+            "AppTheme=" + AppTheme.ToString(),
+            "MenuFontSize=" + MenuFontSize.ToString()
         };
 
         File.WriteAllLines(ConfigFilePath, lines);
-    }
-}
-
-static class ResourceHelper
-{
-    public static Image GetEmbeddedImage(string resourceName)
-    {
-        using (Stream stream = typeof(P).Assembly.GetManifestResourceStream(resourceName))
-        {
-            return (stream == null) ? null : Image.FromStream(stream);
-        }
     }
 }
 
@@ -795,7 +1028,7 @@ static class TaskbarMenuPositioner
         Bottom
     }
 
-    public static void ShowMenu(ToolStripDropDown menu)
+    public static Point GetMenuPosition(Size menuSize)
     {
         Point position = Cursor.Position;
 
@@ -807,7 +1040,7 @@ static class TaskbarMenuPositioner
         {
             if (taskbarPos == TaskbarPosition.Bottom)
             {
-                position.Y = taskbarRect.Top - menu.Height;
+                position.Y = taskbarRect.Top - menuSize.Height;
             }
             else if (taskbarPos == TaskbarPosition.Top)
             {
@@ -819,15 +1052,15 @@ static class TaskbarMenuPositioner
             }
             else if (taskbarPos == TaskbarPosition.Right)
             {
-                position.X = taskbarRect.Left - menu.Width;
+                position.X = taskbarRect.Left - menuSize.Width;
             }
         }
 
         Rectangle screenBounds = Screen.FromPoint(position).WorkingArea;
 
-        if (position.X + menu.Width > screenBounds.Right)
+        if (position.X + menuSize.Width > screenBounds.Right)
         {
-            position.X = screenBounds.Right - menu.Width;
+            position.X = screenBounds.Right - menuSize.Width;
         }
 
         if (position.X < screenBounds.Left)
@@ -835,9 +1068,9 @@ static class TaskbarMenuPositioner
             position.X = screenBounds.Left;
         }
 
-        if (position.Y + menu.Height > screenBounds.Bottom)
+        if (position.Y + menuSize.Height > screenBounds.Bottom)
         {
-            position.Y = screenBounds.Bottom - menu.Height;
+            position.Y = screenBounds.Bottom - menuSize.Height;
         }
 
         if (position.Y < screenBounds.Top)
@@ -845,7 +1078,7 @@ static class TaskbarMenuPositioner
             position.Y = screenBounds.Top;
         }
 
-        menu.Show(position);
+        return position;
     }
 
     private static bool GetTaskbarPosition(out TaskbarPosition position, out Rectangle rect)
@@ -867,18 +1100,10 @@ static class TaskbarMenuPositioner
 
         switch (data.uEdge)
         {
-            case 0:
-                position = TaskbarPosition.Left;
-                break;
-            case 1:
-                position = TaskbarPosition.Top;
-                break;
-            case 2:
-                position = TaskbarPosition.Right;
-                break;
-            case 3:
-                position = TaskbarPosition.Bottom;
-                break;
+            case 0: position = TaskbarPosition.Left; break;
+            case 1: position = TaskbarPosition.Top; break;
+            case 2: position = TaskbarPosition.Right; break;
+            case 3: position = TaskbarPosition.Bottom; break;
         }
 
         return true;
@@ -910,43 +1135,4 @@ static class TaskbarMenuPositioner
     private static extern IntPtr SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
 
     private const uint ABM_GETTASKBARPOS = 5;
-}
-
-
-public static class SystemThemeHelper
-{
-    public static string GetSystemTheme()
-    {
-        try
-        {
-            const string key = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
-
-            RegistryKey personalizeKey = Registry.CurrentUser.OpenSubKey(key);
-            if (personalizeKey != null)
-            {
-                object value = personalizeKey.GetValue("AppsUseLightTheme");
-
-                if (value != null && value is int)
-                {
-                    int lightTheme = (int)value;
-
-                    if (lightTheme == 0)
-                    {
-                        return "Dark";
-                    }
-                    else
-                    {
-                        return "Light";
-                    }
-                }
-
-                personalizeKey.Close();
-            }
-        }
-        catch
-        {
-        }
-
-        return "Light";
-    }
 }
