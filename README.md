@@ -16,7 +16,7 @@ With a simple right-click on the QuickFolders tray icon, you can instantly jump 
 ## Features
 
 - Quickly access your five most recent folders right from the system tray.
-- Open folders with a single click or using shortcut keys 1–5.
+- Open folders with a single click.
 - Optional automatic startup with Windows.
 - Supports custom folder actions.
 - Modern theme support — choose between light, dark, or follow system theme.

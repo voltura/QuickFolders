@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Text;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -11,9 +10,9 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Reflection;
 
-[assembly: AssemblyVersion("1.0.0.5")]
-[assembly: AssemblyFileVersion("1.0.0.5")]
-[assembly: AssemblyInformationalVersion("v1.0.0.5")]
+[assembly: AssemblyVersion("1.0.0.6")]
+[assembly: AssemblyFileVersion("1.0.0.6")]
+[assembly: AssemblyInformationalVersion("v1.0.0.6")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
@@ -29,9 +28,6 @@ static class Program
     private static readonly ToolStripRenderer DarkRenderer = new DarkMenuRenderer();
     private static readonly ToolStripRenderer DefaultRenderer = new ToolStripProfessionalRenderer();
 
-    [DllImport("uxtheme.dll", EntryPoint = "#135", SetLastError = true)]
-    private static extern bool AllowDarkModeForApp(bool allow);
-
     [DllImport("user32.dll")]
     private static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
 
@@ -45,8 +41,6 @@ static class Program
             return;
         }
 
-        AllowDarkModeForApp(true);
-        
         SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         
         Application.EnableVisualStyles();
@@ -58,18 +52,21 @@ static class Program
         {
             Icon = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\explorer.exe")),
             Visible = true,
-            Text = "QuickFolders"
+            Text = null
         };
 
-        DarkContextMenuStrip menu = new DarkContextMenuStrip
+        DarkToolStripDropDownMenu menu = new DarkToolStripDropDownMenu
         {
             ShowCheckMargin = false,
             ShowImageMargin = true,
+            ShowItemToolTips = false,
+            AutoClose = true,
+            AutoSize = true,
+            AllowDrop = false,
+            AllowItemReorder = false,
+            TopLevel = true,
             Font = GetScaledMenuFont()
         };
-
-        menu.PreviewKeyDown += Menu_PreviewKeyDown;
-        menu.KeyDown += Menu_KeyDown;
 
         System.Windows.Forms.Timer mouseCheckTimer = new System.Windows.Forms.Timer
         {
@@ -78,7 +75,7 @@ static class Program
 
         System.Windows.Forms.Timer autoCloseTimer = new System.Windows.Forms.Timer
         {
-            Interval = 2000
+            Interval = 1500
         };
 
         List<ToolStripDropDown> openSubMenus = new List<ToolStripDropDown>();
@@ -148,9 +145,9 @@ static class Program
             autoCloseTimer.Stop();
         };
 
-        icon.MouseClick += (sender, e) =>
+        MouseEventHandler populator = (sender, e) =>
         {
-            if (menu.Visible || e.Button != MouseButtons.Right)
+            if (menu.Visible)
             {
                 return;
             }
@@ -209,7 +206,7 @@ static class Program
                         {
                             if (!string.IsNullOrWhiteSpace(_Config.FolderActionCommand))
                             {
-                                string command = _Config.FolderActionCommand.Replace("%1", path);
+                                string command = _Config.FolderActionCommand.Replace("%1", "\"" + path + "\"");
                                 string executable;
                                 string arguments;
                                 int index;
@@ -320,6 +317,7 @@ static class Program
                         continue;
                     }
 
+                    input = input.Replace("\"%1\"", "%1");
                     int index = input.IndexOf("%1");
 
                     bool hasSpaceBefore = (index > 0 && input[index - 1] == ' ');
@@ -328,13 +326,6 @@ static class Program
                     {
                         input = input.Replace("%1", " %1");
                         index++;
-                    }
-
-                    bool quoted = (index > 0 && input[index - 1] == '"') && (index + 2 < input.Length && input[index + 2] == '"');
-
-                    if (!quoted)
-                    {
-                        input = input.Replace("%1", "\"%1\"");
                     }
 
                     if (input == current)
@@ -522,9 +513,13 @@ static class Program
             ApplyTheme(menu);
 
             menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size));
+            menu.Focus();
 
             mouseCheckTimer.Start();
         };
+
+        icon.MouseClick += populator;
+        icon.MouseMove += populator;
 
         Application.Run(new ApplicationContext());
     }
@@ -578,20 +573,6 @@ static class Program
         };
     }
 
-    class DarkContextMenuStrip : ContextMenuStrip
-    {
-        protected override CreateParams CreateParams
-        {
-            get
-            {
-                CreateParams cp = base.CreateParams;
-                cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
-
-                return cp;
-            }
-        }
-    }
-
     class DarkToolStripDropDownMenu : ToolStripDropDownMenu
     {
         protected override CreateParams CreateParams
@@ -600,6 +581,7 @@ static class Program
             {
                 CreateParams cp = base.CreateParams;
                 cp.ClassStyle &= ~0x00020000; // Remove CS_DROPSHADOW
+                cp.ExStyle |= 0x00000080;
 
                 return cp;
             }
@@ -611,12 +593,6 @@ static class Program
         public DarkToolStripMenuItem() : base() { }
 
         public DarkToolStripMenuItem(string text) : base(text) { }
-
-        public DarkToolStripMenuItem(string text, Image image) : base(text, image) { }
-
-        public DarkToolStripMenuItem(string text, Image image, EventHandler onClick) : base(text, image, onClick) { }
-
-        public DarkToolStripMenuItem(string text, Image image, ToolStripItem[] dropDownItems) : base(text, image, dropDownItems) { }
 
         protected override ToolStripDropDown CreateDefaultDropDown()
         {
@@ -648,22 +624,30 @@ static class Program
 
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
-            if (!e.Item.Enabled)
-            {
-                e.TextColor = Color.FromArgb(160, 160, 160);
-            }
-
-            e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding;
-            Color textColor = Color.FromArgb(240, 240, 240);
+            Color textColor = (e.Item.Enabled) ? Color.FromArgb(240, 240, 240) : Color.FromArgb(160, 160, 160);
             TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle, textColor, flags);
         }
 
         protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
         {
-            if (!e.Item.Enabled)
+            Rectangle rect = new Rectangle(Point.Empty, e.Item.Size);
+
+            if (e.Item.Selected)
             {
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(32, 32, 32)), new Rectangle(Point.Empty, e.ToolStrip.Size));
+                using (System.Drawing.Drawing2D.LinearGradientBrush brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    rect,
+                    Color.FromArgb(70, 70, 70),
+                    Color.FromArgb(50, 50, 50),
+                    System.Drawing.Drawing2D.LinearGradientMode.Vertical))
+                {
+                    e.Graphics.FillRectangle(brush, rect);
+                }
+            }
+            else if (!e.Item.Enabled)
+            {
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(32, 32, 32)), rect);
             }
             else
             {
@@ -711,7 +695,7 @@ static class Program
         }
     }
 
-    private static void ApplyTheme(DarkContextMenuStrip menu)
+    private static void ApplyTheme(DarkToolStripDropDownMenu menu)
     {
         string suffix = _Config.AppTheme == Theme.Dark ? "_dark" : "";
         Theme realSystemTheme = _Config.AppTheme == Theme.Dark ? Theme.Dark : Theme.Light;
@@ -789,35 +773,6 @@ static class Program
             foreach (ToolStripItem subItem in menuItem.DropDownItems)
             {
                 ApplyThemeToMenuItem(subItem, suffix, realSystemTheme);
-            }
-        }
-    }
-
-    private static void Menu_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-    {
-        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9)
-        {
-            e.IsInputKey = true;
-        }
-    }
-
-    private static void Menu_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9)
-        {
-            int index = e.KeyCode - Keys.D1 + 1;
-
-            DarkContextMenuStrip menu = sender as DarkContextMenuStrip;
-
-            if (menu != null && index < menu.Items.Count)
-            {
-                ToolStripItem item = menu.Items[index];
-
-                if (item != null && item.Enabled)
-                {
-                    item.PerformClick();
-                    e.Handled = true;
-                }
             }
         }
     }

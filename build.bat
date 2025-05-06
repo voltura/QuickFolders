@@ -16,7 +16,7 @@ IF EXIST %OUT% (
 
 ECHO Compiling %OUT%...
 
-%CSC% /nologo /target:winexe /platform:x86 /optimize+ /debug- /nowarn:1591 /filealign:512 /win32res:%RES% /main:P /out:%OUT% /reference:%VB% ^
+%CSC% /nologo /target:winexe /platform:x86 /optimize+ /debug- /nowarn:1591 /filealign:512 /win32res:%RES% /main:Program /out:%OUT% /reference:%VB% ^
 /resource:Resources\1.png,QuickFolders.Resources.1.png ^
 /resource:Resources\2.png,QuickFolders.Resources.2.png ^
 /resource:Resources\3.png,QuickFolders.Resources.3.png ^
