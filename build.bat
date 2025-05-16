@@ -2,7 +2,7 @@
 SETLOCAL
 
 SET CSC="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-SET SRC=Program.cs
+SET SRC=*.cs
 SET OUT=QuickFolders.exe
 SET RES=QuickFolders.res
 SET VB="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dll"
