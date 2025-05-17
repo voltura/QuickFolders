@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -22,6 +21,7 @@ static class TaskbarMenuPositioner
         icon.Icon = pinkIcon;
         WaitWithDoEvents(100);
         Rectangle? trayIconAreaBounds = GetTrayIconAreaBounds();
+
         using (Bitmap bmp = CaptureTrayIconArea(trayIconAreaBounds))
         {
             icon.Icon = folderIcon;
@@ -38,6 +38,7 @@ static class TaskbarMenuPositioner
         {
             position.X = trayIconAreaBounds.Value.Left + 16;
         }
+
         if (position.X > trayIconAreaBounds.Value.Right)
         {
             position.X = trayIconAreaBounds.Value.Right - menuSize.Width;
@@ -45,6 +46,7 @@ static class TaskbarMenuPositioner
 
         TaskbarPosition taskbarPos;
         Rectangle taskbarRect;
+
         if (GetTaskbarPosition(out taskbarPos, out taskbarRect))
         {
             if (taskbarPos == TaskbarPosition.Bottom)
@@ -93,6 +95,7 @@ static class TaskbarMenuPositioner
     private static void WaitWithDoEvents(int milliseconds)
     {
         var end = Environment.TickCount + milliseconds;
+
         while (Environment.TickCount < end)
         {
             Application.DoEvents();
@@ -117,6 +120,7 @@ static class TaskbarMenuPositioner
             for (int y = 0; y < data.Height; y++)
             {
                 byte* row = ptr + (y * data.Stride);
+
                 for (int x = 0; x < data.Width; x++)
                 {
                     byte b = row[x * 4 + 0];
@@ -193,18 +197,21 @@ static class TaskbarMenuPositioner
     public static Rectangle? GetTrayIconAreaBounds()
     {
         IntPtr hShellTrayWnd = FindWindow("Shell_TrayWnd", null);
+
         if (hShellTrayWnd == IntPtr.Zero)
         {
             return null;
         }
 
         IntPtr hTrayNotifyWnd = FindWindowEx(hShellTrayWnd, IntPtr.Zero, "TrayNotifyWnd", null);
+
         if (hTrayNotifyWnd == IntPtr.Zero)
         {
             return null;
         }
 
         RECT rect;
+
         if (GetWindowRect(hTrayNotifyWnd, out rect))
         {
             return rect.ToRectangle();

@@ -3,7 +3,6 @@ using System.Windows.Forms;
 
 internal static class ProgramHelpers
 {
-
     public static bool StartWithWindows
     {
         get

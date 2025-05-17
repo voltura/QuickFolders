@@ -6,12 +6,11 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("1.0.1.0")]
-[assembly: AssemblyFileVersion("1.0.1.0")]
-[assembly: AssemblyInformationalVersion("v1.0.1.0")]
+[assembly: AssemblyVersion("1.0.1.1")]
+[assembly: AssemblyFileVersion("1.0.1.1")]
+[assembly: AssemblyInformationalVersion("v1.0.1.1")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
@@ -31,7 +30,7 @@ static class Program
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
-    static readonly object lockObject = new object();
+    private static readonly object lockObject = new object();
     private static DarkToolStripDropDownMenu menu;
     private static System.Windows.Forms.Timer mouseCheckTimer;
     private static System.Windows.Forms.Timer autoCloseTimer;
@@ -48,9 +47,11 @@ static class Program
     private static bool inAutoClose = false;
     private static bool userEnteredMenu = false;
     private static readonly FolderMenuItem[] recentFolderItems = new FolderMenuItem[5];
-    static Icon pinkIcon = null;
-    static Icon folderIcon = null;
+    private static Icon pinkIcon = null;
+    private static Icon folderIcon = null;
     private static DateTime lastMouseMovementTime = DateTime.UtcNow;
+    private static HotKey hotKey;
+
 
     [STAThread]
     static void Main()
@@ -66,14 +67,16 @@ static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         ThemeHelpers.Config = Config.Load();
         folderIcon = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\explorer.exe"));
+        pinkIcon = CreateMarkedIcon(folderIcon);
+
+        // create icon
+        // -----------
         icon = new NotifyIcon
         {
             Icon = folderIcon,
             Visible = true,
             Text = null
         };
-
-        pinkIcon = CreateMarkedIcon(folderIcon);
 
         // create menu
         // -----------
@@ -100,7 +103,6 @@ static class Program
             Tag = "folder",
             Enabled = false
         };
-
         menu.Items.Add(header);
 
         // add 5 placeholder items for folders
@@ -133,7 +135,7 @@ static class Program
 
         mouseCheckTimer.Tick += OnMouseCheckTimerTick;
         autoCloseTimer.Tick += OnAutoCloseTimerTick;
-        Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
+        autoCloseTimer.Start();
 
         // define actions on mouse events
         menu.MouseEnter += OnMouseEnteredMenu;
@@ -142,7 +144,96 @@ static class Program
         icon.MouseClick += OnIconMouseInteraction;
         icon.MouseMove += OnIconMouseInteraction;
 
+        // add shortcuts 1-5
+        menu.PreviewKeyDown += OnMenuPreviewKeyDown;
+        menu.KeyDown += OnMenuKeyDown;
+
+        // add hotkey CTRL+SHIFT+SPACE
+        hotKey = new HotKey(ShowMenu);
+
+        // run application
         Application.Run(new ApplicationContext());
+    }
+
+    private static void ShowMenu()
+    {
+        if (isShowingMenu || menu == null || menu.Visible)
+        {
+            return;
+        }
+
+        lock (lockObject)
+        {
+            isShowingMenu = true;
+            UpdateRecentFolderItems();
+            menu.Font = ThemeHelpers.GetScaledMenuFont();
+            ThemeHelpers.ApplyTheme(menu);
+            lastMouseMovementTime = DateTime.UtcNow;
+
+            menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
+            menu.Focus();
+            menu.Items[1].Select();
+
+            Application.DoEvents();
+
+            if (menu.Handle != IntPtr.Zero)
+            {
+                SetForegroundWindow(menu.Handle);
+            }
+
+            isShowingMenu = false;
+        }
+
+        mouseCheckTimer.Start();
+        autoCloseTimer.Start();
+    }
+
+    private static void OnMenuPreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+    {
+        ResetAutoClose();
+
+        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D5)
+        {
+            e.IsInputKey = true;
+        }
+    }
+
+    private static void ResetAutoClose()
+    {
+        userEnteredMenu = true;
+        lastMouseMovementTime = DateTime.UtcNow;
+        
+        if (autoCloseTimer != null)
+        {
+            autoCloseTimer.Stop();
+            autoCloseTimer.Start();
+        }
+    }
+
+    private static void OnMenuKeyDown(object sender, KeyEventArgs e)
+    {
+        int index = -1;
+
+        if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D5)
+        {
+            index = e.KeyCode - Keys.D1;
+        }
+        else if (e.KeyCode >= Keys.NumPad1 && e.KeyCode <= Keys.NumPad5)
+        {
+            index = e.KeyCode - Keys.NumPad1;
+        }
+
+        if (index >= 0 && index < recentFolderItems.Length)
+        {
+            var item = recentFolderItems[index];
+
+            if (item != null && item.Enabled && !string.IsNullOrEmpty(item.FolderPath))
+            {
+                OpenFolder(item.FolderPath);
+                menu.Close();
+                e.Handled = true;
+            }
+        }
     }
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -158,12 +249,14 @@ static class Program
             int centerY = (bmp.Height - dotSize) / 2;
 
             Rectangle dotArea = new Rectangle(centerX, centerY, dotSize, dotSize);
+
             using (Brush brush = new SolidBrush(Color.FromArgb(255, 20, 147)))
             {
                 g.FillRectangle(brush, dotArea);
             }
 
             IntPtr hIcon = bmp.GetHicon();
+
             using (var icon = Icon.FromHandle(hIcon))
             {
                 Icon clone = (Icon)icon.Clone();
@@ -186,7 +279,9 @@ static class Program
     private static void OnMouseLeftMenu(object sender, EventArgs e)
     {
         if (!menu.Visible)
+        {
             userEnteredMenu = false;
+        }
     }
 
     private static void OnMouseEnteredMenu(object sender, EventArgs e)
@@ -196,34 +291,7 @@ static class Program
 
     private static void OnIconMouseInteraction(object sender, MouseEventArgs e)
     {
-        lock (lockObject)
-        {
-
-            if (isShowingMenu || (menu != null && menu.Visible))
-            {
-                return;
-            }
-
-            isShowingMenu = true;
-
-            UpdateRecentFolderItems();
-
-            menu.Font = ThemeHelpers.GetScaledMenuFont();
-            ThemeHelpers.ApplyTheme(menu);
-            lastMouseMovementTime = DateTime.UtcNow;
-            menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
-            menu.Focus();
-            Application.DoEvents();
-
-            if (menu.Handle != IntPtr.Zero)
-            {
-                SetForegroundWindow(menu.Handle);
-            }
-
-            isShowingMenu = false;
-        }
-
-        mouseCheckTimer.Start();
+        ShowMenu();
     }
 
     private static void UpdateRecentFolderItems()
@@ -275,6 +343,7 @@ static class Program
                 {
                     Marshal.ReleaseComObject(persist);
                 }
+
                 if (link != null)
                 {
                     Marshal.ReleaseComObject(link);
@@ -376,7 +445,7 @@ static class Program
         theme.DropDownItems.Add(systemTheme);
         theme.DropDownItems.Add(darkTheme);
         theme.DropDownItems.Add(lightTheme);
-
+        theme.DropDownOpening += OnMenuOpening;
         theme.MouseEnter += OnMenuItemWithChildrenMouseEnter;
         menuRoot.DropDownItems.Add(theme);
 
@@ -408,8 +477,8 @@ static class Program
         fontSize.DropDownItems.Add(smallFont);
         fontSize.DropDownItems.Add(mediumFont);
         fontSize.DropDownItems.Add(largeFont);
-
         fontSize.MouseEnter += OnMenuItemWithChildrenMouseEnter;
+        fontSize.DropDownOpening += OnMenuOpening;
         menuRoot.DropDownItems.Add(fontSize);
 
         DarkToolStripMenuItem exit = new DarkToolStripMenuItem("Exit")
@@ -422,8 +491,14 @@ static class Program
 
         menuRoot.DropDownItems.Add(exit);
 
+        menuRoot.DropDownOpening += OnMenuOpening;
 
         return menuRoot;
+    }
+
+    private static void OnMenuOpening(object sender, EventArgs e)
+    {
+        ResetAutoClose();
     }
 
     private static void OnMenuItemWithChildrenMouseEnter(object sender, EventArgs e)
@@ -509,12 +584,14 @@ static class Program
     private static bool IsCursorOverAnyVisibleSubmenu(Control parent, Point cursorPos)
     {
         ToolStripDropDown dropDown = parent as ToolStripDropDown;
+
         if (dropDown != null && dropDown.Visible && dropDown.Bounds.Contains(cursorPos))
         {
             return true;
         }
 
         ToolStripDropDownMenu menu = parent as ToolStripDropDownMenu;
+
         if (menu == null)
         {
             return false;
@@ -523,6 +600,7 @@ static class Program
         foreach (ToolStripItem item in menu.Items)
         {
             ToolStripMenuItem menuItem = item as ToolStripMenuItem;
+
             if (menuItem != null && menuItem.DropDown != null && menuItem.DropDown.Visible)
             {
                 if (IsCursorOverAnyVisibleSubmenu(menuItem.DropDown, cursorPos))
@@ -558,13 +636,13 @@ static class Program
 
         if (!autoCloseTimer.Enabled)
         {
-            Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
+            autoCloseTimer.Start();
         }
     }
 
     private static void OnAutoCloseTimerTick(object sender, EventArgs e)
     {
-        if (!menu.Visible)
+        if (!menu.Visible || userEnteredMenu)
         {
             return;
         }
@@ -590,7 +668,7 @@ static class Program
             }
             finally
             {
-                Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
+                autoCloseTimer.Start();
                 inAutoClose = false;
             }
         }
@@ -598,9 +676,6 @@ static class Program
 
     private static void OnMenuClosed(object sender, ToolStripDropDownClosedEventArgs e)
     {
-        mouseCheckTimer.Stop();
-        autoCloseTimer.Stop();
-
         userEnteredMenu = false;
     }
 
@@ -669,6 +744,7 @@ static class Program
     private static void OnMenuRootDropDownOpening(object sender, EventArgs e)
     {
         setDefaultAction.Enabled = !string.IsNullOrEmpty(ThemeHelpers.Config.FolderActionCommand);
+        OnMenuOpening(sender, e);
     }
 
     private static void OnStartWithWindowsCheckedChanged(object sender, EventArgs e)
@@ -676,61 +752,53 @@ static class Program
         ProgramHelpers.StartWithWindows = startWithWindows.Checked;
     }
 
-    private static void OnDarkThemeClick(object sender, EventArgs e)
+    private static void SetTheme(Theme theme)
     {
-        ThemeHelpers.Config.AppTheme = Theme.Dark;
+        ThemeHelpers.Config.AppTheme = theme;
         ThemeHelpers.Config.Save();
         ThemeHelpers.ApplyTheme(menu);
-        systemTheme.Checked = false;
-        lightTheme.Checked = false;
-        darkTheme.Checked = true;
+        systemTheme.Checked = (theme == Theme.System);
+        lightTheme.Checked = (theme == Theme.Light);
+        darkTheme.Checked = (theme == Theme.Dark);
+    }
+
+    private static void OnDarkThemeClick(object sender, EventArgs e)
+    {
+        SetTheme(Theme.Dark);
     }
 
     private static void OnLightThemeClick(object sender, EventArgs e)
     {
-        ThemeHelpers.Config.AppTheme = Theme.Light;
-        ThemeHelpers.Config.Save();
-        ThemeHelpers.ApplyTheme(menu);
-        systemTheme.Checked = false;
-        lightTheme.Checked = true;
-        darkTheme.Checked = false;
+        SetTheme(Theme.Light);
     }
 
     private static void OnSystemThemeClick(object sender, EventArgs e)
     {
-        ThemeHelpers.Config.AppTheme = Theme.System;
+        SetTheme(Theme.System);
+    }
+
+    private static void SetFontSize(FontSize fontSize)
+    {
+        ThemeHelpers.Config.MenuFontSize = fontSize;
         ThemeHelpers.Config.Save();
-        ThemeHelpers.ApplyTheme(menu);
-        systemTheme.Checked = true;
-        lightTheme.Checked = false;
-        darkTheme.Checked = false;
+        smallFont.Checked = (fontSize == FontSize.Small);
+        mediumFont.Checked = (fontSize == FontSize.Medium);
+        largeFont.Checked = (fontSize == FontSize.Large);
     }
 
     private static void OnSmallFontClick(object sender, EventArgs e)
     {
-        ThemeHelpers.Config.MenuFontSize = FontSize.Small;
-        ThemeHelpers.Config.Save();
-        smallFont.Checked = true;
-        mediumFont.Checked = false;
-        largeFont.Checked = false;
+        SetFontSize(FontSize.Small);
     }
 
     private static void OnMediumFontClick(object sender, EventArgs e)
     {
-        ThemeHelpers.Config.MenuFontSize = FontSize.Medium;
-        ThemeHelpers.Config.Save();
-        smallFont.Checked = false;
-        mediumFont.Checked = true;
-        largeFont.Checked = false;
+        SetFontSize(FontSize.Medium);
     }
 
     private static void OnLargeFontClick(object sender, EventArgs e)
     {
-        ThemeHelpers.Config.MenuFontSize = FontSize.Large;
-        ThemeHelpers.Config.Save();
-        smallFont.Checked = false;
-        mediumFont.Checked = false;
-        largeFont.Checked = true;
+        SetFontSize(FontSize.Large);
     }
 
     private static void OnExitClick(object sender, EventArgs e)
@@ -770,10 +838,15 @@ static class Program
             pinkIcon = null;
         }
 
+        if (hotKey != null)
+        {
+            hotKey.Dispose();
+            hotKey = null;
+        }
+
         ThemeHelpers.DisposeCachedImages();
         Application.Exit();
     }
-
 
     private static void OpenFolder(string path)
     {

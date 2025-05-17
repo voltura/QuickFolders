@@ -6,11 +6,13 @@ SET SRC=^
 Config.cs ^
 FolderMenuItem.cs ^
 FontSize.cs ^
+HotKey.cs ^
 Program.cs ^
 ProgramHelpers.cs ^
 TaskbarMenuPositioner.cs ^
 Theme.cs ^
 ThemeHelpers.cs
+
 SET OUT=QuickFolders.exe
 SET RES=QuickFolders.res
 SET VB="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dll"

@@ -243,6 +243,7 @@ public static class ThemeHelpers
         lock (_imageCache)
         {
             Image cached;
+
             if (_imageCache.TryGetValue(key, out cached))
             {
                 return cached;
@@ -251,6 +252,7 @@ public static class ThemeHelpers
             string resourceName = "QuickFolders.Resources." + key + ".png";
 
             Stream stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+
             if (stream == null)
             {
                 return null;
@@ -258,6 +260,7 @@ public static class ThemeHelpers
 
             Image img = Image.FromStream(stream);
             _imageCache[key] = img;
+
             return img;
         }
     }
@@ -270,8 +273,8 @@ public static class ThemeHelpers
             {
                 img.Dispose();
             }
+
             _imageCache.Clear();
         }
     }
-
 }
