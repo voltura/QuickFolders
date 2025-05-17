@@ -4,8 +4,8 @@ Instant access to your most recent folders — right from the system tray.
 
 [View on GitHub](https://github.com/voltura/QuickFolders) · [Browse All Releases](https://github.com/voltura/QuickFolders/releases)
 
-QuickFolders is a lightweight and modern Windows 11 tray app that keeps your five most recently used folders just one click away.
-Simply hover over the tray icon to instantly access and open any of them — no need to browse manually.
+QuickFolders is a lightweight Windows 11 tray app that keeps your five most recently used folders just a click away.
+Hover over the tray icon to open them instantly or use the global shortcut (Ctrl+Shift+Space) for quick keyboard navigation.
 
 Perfect for improving workflow and reducing repetitive navigation.
 
@@ -19,6 +19,8 @@ Perfect for improving workflow and reducing repetitive navigation.
 
 - Access your five most recent folders directly from the tray icon.
 - Open folders instantly with a single click.
+- Use the global shortcut (Ctrl+Shift+Space) to open the list of your five most recent folders.
+- Navigate and open folders using keys 1-5, all without needing the mouse.
 - Optionally start with Windows.
 - Define custom folder open actions.
 - Light and dark theme support — automatically follows system theme.
@@ -37,7 +39,7 @@ Perfect for improving workflow and reducing repetitive navigation.
 
 QuickFolders in action:
 
-<img src="https://github.com/user-attachments/assets/7c2a3f1c-9e5d-4d58-b903-3a916467814b" width="560"/>
+<img width="410" alt="QuickFolders_Dark_v1 0 1 1" src="https://github.com/user-attachments/assets/476668aa-b42c-42cd-b431-27c6d462ff96" />
 
 ---
 
