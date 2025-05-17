@@ -4,5 +4,5 @@ using System.Reflection;
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyProduct("QuickFolders")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
-[assembly: AssemblyVersion("1.0.0.5")]
-[assembly: AssemblyFileVersion("1.0.0.5")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
