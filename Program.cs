@@ -209,7 +209,7 @@ static class Program
             lastMouseMovementTime = DateTime.UtcNow;
             menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
             menu.Focus();
-
+            Application.DoEvents();
             isShowingMenu = false;
         }
 
@@ -733,6 +733,12 @@ static class Program
             if (menuItem != null && menuItem.HasDropDownItems)
             {
                 Control dummy = menuItem.DropDown;
+                
+                if (!menuItem.DropDown.Visible)
+                {
+                    menuItem.ShowDropDown();
+                    menuItem.HideDropDown();
+                }
 
                 WarmUpAllDropDowns(menuItem.DropDownItems);
             }
