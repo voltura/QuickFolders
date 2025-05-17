@@ -37,7 +37,7 @@ Perfect for improving workflow and reducing repetitive navigation.
 
 QuickFolders in action:
 
-<img src="https://github.com/user-attachments/assets/eeedceaf-6be2-4ef0-b4a8-2d03cc50c1fb" width="560"/>
+<img src="https://github.com/user-attachments/assets/7c2a3f1c-9e5d-4d58-b903-3a916467814b" width="560"/>
 
 ---
 
