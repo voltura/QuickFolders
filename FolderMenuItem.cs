@@ -1,7 +1,7 @@
 ﻿sealed class FolderMenuItem : DarkToolStripMenuItem
 {
-    private readonly string _folderPath;
-    public string FolderPath { get { return _folderPath; } }
+    private string _folderPath;
+    public string FolderPath { get { return _folderPath; } set { _folderPath = value; } }
 
     public FolderMenuItem(string text, string folderPath)
         : base(text)

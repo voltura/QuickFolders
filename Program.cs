@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -9,9 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("1.0.0.6")]
-[assembly: AssemblyFileVersion("1.0.0.6")]
-[assembly: AssemblyInformationalVersion("v1.0.0.6")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
+[assembly: AssemblyInformationalVersion("v1.0.1.0")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
@@ -28,7 +27,7 @@ static class Program
     private static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
 
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
-
+    static readonly object lockObject = new object();
     private static DarkToolStripDropDownMenu menu;
     private static System.Windows.Forms.Timer mouseCheckTimer;
     private static System.Windows.Forms.Timer autoCloseTimer;
@@ -42,8 +41,12 @@ static class Program
     private static DarkToolStripMenuItem largeFont;
     private static NotifyIcon icon;
     private static bool isShowingMenu = false;
-    private static readonly List<ToolStripDropDown> openSubMenus = new List<ToolStripDropDown>();
-
+    private static bool inAutoClose = false;
+    private static bool userEnteredMenu = false;
+    private static readonly FolderMenuItem[] recentFolderItems = new FolderMenuItem[5];
+    static Icon pinkIcon = null;
+    static Icon folderIcon = null;
+    private static DateTime lastMouseMovementTime = DateTime.UtcNow;
 
     [STAThread]
     static void Main()
@@ -58,14 +61,18 @@ static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         ThemeHelpers.Config = Config.Load();
-
+        folderIcon = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\explorer.exe"));
         icon = new NotifyIcon
         {
-            Icon = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(@"%SystemRoot%\explorer.exe")),
+            Icon = folderIcon,
             Visible = true,
-            Text = null
+            Text = "QuickFolders"
         };
 
+        pinkIcon = CreateMarkedIcon(folderIcon);
+
+        // create menu
+        // -----------
         menu = new DarkToolStripDropDownMenu
         {
             ShowCheckMargin = false,
@@ -79,9 +86,40 @@ static class Program
             Font = ThemeHelpers.GetScaledMenuFont()
         };
 
+        // create menu items
+        // -----------------
+
+        // header menu item
+        DarkToolStripMenuItem header = new DarkToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
+        {
+            Image = ThemeHelpers.GetThemeImage("folder"),
+            Tag = "folder",
+            Enabled = false
+        };
+
+        menu.Items.Add(header);
+
+        // add 5 placeholder items for folders
+        for (int i = 0; i < 5; i++)
+        {
+            recentFolderItems[i] = new FolderMenuItem("Loading...", "")
+            {
+                Image = ThemeHelpers.GetThemeImage((i + 1).ToString()),
+                Tag = (i + 1).ToString()
+            };
+            recentFolderItems[i].Click += OnRecentFolderItemClick;
+            menu.Items.Add(recentFolderItems[i]);
+        }
+
+        // add root menu
+        menu.Items.Add(BuildRootMenu());
+
+        WarmUpAllDropDowns(menu.Items);
+
+        // create timers
         mouseCheckTimer = new System.Windows.Forms.Timer
         {
-            Interval = 200
+            Interval = 100
         };
 
         autoCloseTimer = new System.Windows.Forms.Timer
@@ -91,6 +129,11 @@ static class Program
 
         mouseCheckTimer.Tick += OnMouseCheckTimerTick;
         autoCloseTimer.Tick += OnAutoCloseTimerTick;
+        autoCloseTimer.Enabled = true;
+
+        // define actions on mouse events
+        menu.MouseEnter += OnMouseEnteredMenu;
+        menu.MouseLeave += OnMouseLeftMenu;
         menu.Closed += OnMenuClosed;
         icon.MouseClick += OnIconMouseInteraction;
         icon.MouseMove += OnIconMouseInteraction;
@@ -98,43 +141,83 @@ static class Program
         Application.Run(new ApplicationContext());
     }
 
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
+    public static Icon CreateMarkedIcon(Icon baseIcon)
+    {
+        using (Bitmap bmp = baseIcon.ToBitmap())
+        using (Graphics g = Graphics.FromImage(bmp))
+        {
+            int dotSize = 3;
+            int centerX = (bmp.Width - dotSize) / 2;
+            int centerY = (bmp.Height - dotSize) / 2;
+
+            Rectangle dotArea = new Rectangle(centerX, centerY, dotSize, dotSize);
+            using (Brush brush = new SolidBrush(Color.FromArgb(255, 20, 147)))
+            {
+                g.FillRectangle(brush, dotArea);
+            }
+
+            IntPtr hIcon = bmp.GetHicon();
+            using (var icon = Icon.FromHandle(hIcon))
+            {
+                Icon clone = (Icon)icon.Clone();
+                DestroyIcon(hIcon);
+                return clone;
+            }
+        }
+    }
+
+    private static void OnRecentFolderItemClick(object sender, EventArgs e)
+    {
+        var item = sender as FolderMenuItem;
+
+        if (item != null && !string.IsNullOrEmpty(item.FolderPath))
+        {
+            OpenFolder(item.FolderPath);
+        }
+    }
+
+    private static void OnMouseLeftMenu(object sender, EventArgs e)
+    {
+        if (!menu.Visible)
+            userEnteredMenu = false;
+    }
+
+    private static void OnMouseEnteredMenu(object sender, EventArgs e)
+    {
+        userEnteredMenu = true;
+    }
+
     private static void OnIconMouseInteraction(object sender, MouseEventArgs e)
     {
-        if (isShowingMenu)
+        lock (lockObject)
         {
-            return;
+
+            if (isShowingMenu || (menu != null && menu.Visible))
+            {
+                return;
+            }
+
+            isShowingMenu = true;
+
+            UpdateRecentFolderItems();
+
+            menu.Font = ThemeHelpers.GetScaledMenuFont();
+            ThemeHelpers.ApplyTheme(menu);
+            lastMouseMovementTime = DateTime.UtcNow;
+            menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
+            menu.Focus();
+
+            isShowingMenu = false;
         }
 
-        isShowingMenu = true;
+        mouseCheckTimer.Start();
+    }
 
-        if (menu != null)
-        {
-            menu.Closed -= OnMenuClosed;
-            DisposeMenuItems(menu.Items);
-            menu.Dispose();
-            menu = null;
-        }
-
-        menu = new DarkToolStripDropDownMenu
-        {
-            ShowCheckMargin = false,
-            ShowImageMargin = true,
-            ShowItemToolTips = false,
-            AutoClose = true,
-            AutoSize = true,
-            AllowDrop = false,
-            AllowItemReorder = false,
-            TopLevel = true,
-            Font = ThemeHelpers.GetScaledMenuFont()
-        };
-
-        menu.Closed += OnMenuClosed;
-
-        if (menu.Visible)
-        {
-            return;
-        }
-
+    private static void UpdateRecentFolderItems()
+    {
         FileInfo[] files;
 
         try
@@ -146,67 +229,65 @@ static class Program
             return;
         }
 
-        Array.Sort(files, delegate (FileInfo a, FileInfo b)
-        {
-            return b.LastWriteTime.CompareTo(a.LastWriteTime);
-        });
+        Array.Sort(files, (a, b) => b.LastWriteTime.CompareTo(a.LastWriteTime));
 
-        DarkToolStripMenuItem header = new DarkToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
-        {
-            Image = ThemeHelpers.GetThemeImage("folder"),
-            Tag = "folder",
-            Enabled = false
-        };
+        int updated = 0;
 
-        menu.Items.Add(header);
-        int added = 1;
-
-        for (int i = 0; i < files.Length; i++)
+        for (int i = 0; i < files.Length && updated < 5; i++)
         {
-            FileInfo file = files[i];
+            IShellLink link = null;
+            IPersistFile persist = null;
 
             try
             {
-                IShellLink link = (IShellLink)new ShellLink();
-                ((IPersistFile)link).Load(file.FullName, 0);
+                link = (IShellLink)new ShellLink();
+                persist = (IPersistFile)link;
+                persist.Load(files[i].FullName, 0);
 
                 StringBuilder target = new StringBuilder(260);
                 link.GetPath(target, target.Capacity, IntPtr.Zero, 0);
-
                 string path = target.ToString();
 
-                if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || !Directory.Exists(path))
+                if (!string.IsNullOrWhiteSpace(path) && Path.IsPathRooted(path) && Directory.Exists(path))
                 {
-                    continue;
+                    recentFolderItems[updated].Text = path;
+                    recentFolderItems[updated].FolderPath = path;
+                    recentFolderItems[updated].Enabled = true;
+                    updated++;
                 }
-
-                FolderMenuItem item = new FolderMenuItem(path, path)
-                {
-                    Image = ThemeHelpers.GetThemeImage(added.ToString()),
-                    Tag = added.ToString()
-                };
-
-                menu.Items.Add(item);
-
-                if (added == 5)
-                {
-                    break;
-                }
-
-                added++;
             }
             catch
             {
             }
+            finally
+            {
+                if (persist != null)
+                {
+                    Marshal.ReleaseComObject(persist);
+                }
+                if (link != null)
+                {
+                    Marshal.ReleaseComObject(link);
+                }
+            }
         }
 
+        // Clear remaining placeholders
+        for (int i = updated; i < 5; i++)
+        {
+            recentFolderItems[i].Text = "";
+            recentFolderItems[i].FolderPath = "";
+            recentFolderItems[i].Enabled = false;
+        }
+    }
+
+    private static DarkToolStripMenuItem BuildRootMenu()
+    {
         DarkToolStripMenuItem menuRoot = new DarkToolStripMenuItem("Menu")
         {
             Image = ThemeHelpers.GetThemeImage("more"),
             Tag = "more"
         };
-
-        TrackSubMenu(menuRoot, openSubMenus);
 
         DarkToolStripMenuItem web = new DarkToolStripMenuItem("QuickFolders web site")
         {
@@ -257,8 +338,6 @@ static class Program
             Tag = "theme"
         };
 
-        TrackSubMenu(theme, openSubMenus);
-
         systemTheme = new DarkToolStripMenuItem(Theme.System.ToString())
         {
             Image = ThemeHelpers.GetThemeImage("system"),
@@ -296,8 +375,6 @@ static class Program
             Tag = "system"
         };
 
-        TrackSubMenu(fontSize, openSubMenus);
-
         smallFont = new DarkToolStripMenuItem(FontSize.Small.ToString())
         {
             Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Small
@@ -333,23 +410,41 @@ static class Program
 
         menuRoot.DropDownItems.Add(exit);
 
-        menu.Items.Add(menuRoot);
+        return menuRoot;
+    }
 
-        menu.Font = ThemeHelpers.GetScaledMenuFont();
-        ThemeHelpers.ApplyTheme(menu);
+    private static bool IsCursorOverAnyVisibleSubmenu(Control parent, Point cursorPos)
+    {
+        ToolStripDropDown dropDown = parent as ToolStripDropDown;
+        if (dropDown != null && dropDown.Visible && dropDown.Bounds.Contains(cursorPos))
+        {
+            return true;
+        }
 
-        menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size));
-        menu.Focus();
+        ToolStripDropDownMenu menu = parent as ToolStripDropDownMenu;
+        if (menu == null)
+        {
+            return false;
+        }
 
-        isShowingMenu = false;
-        mouseCheckTimer.Start();
+        foreach (ToolStripItem item in menu.Items)
+        {
+            ToolStripMenuItem menuItem = item as ToolStripMenuItem;
+            if (menuItem != null && menuItem.DropDown != null && menuItem.DropDown.Visible)
+            {
+                if (IsCursorOverAnyVisibleSubmenu(menuItem.DropDown, cursorPos))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static void OnMouseCheckTimerTick(object sender, EventArgs e)
     {
-        Point cursor = Cursor.Position;
-
-        if (!menu.Visible)
+        if (!menu.Visible || inAutoClose == true || !userEnteredMenu)
         {
             return;
         }
@@ -362,13 +457,10 @@ static class Program
             return;
         }
 
-        foreach (ToolStripDropDown submenu in openSubMenus)
+        if (IsCursorOverAnyVisibleSubmenu(menu, cursorPos))
         {
-            if (submenu.Bounds.Contains(cursorPos))
-            {
-                autoCloseTimer.Stop();
-                return;
-            }
+            autoCloseTimer.Stop();
+            return;
         }
 
         if (!autoCloseTimer.Enabled)
@@ -379,8 +471,6 @@ static class Program
 
     private static void OnAutoCloseTimerTick(object sender, EventArgs e)
     {
-        autoCloseTimer.Stop();
-
         if (!menu.Visible)
         {
             return;
@@ -388,20 +478,29 @@ static class Program
 
         Point cursorPos = Cursor.Position;
 
-        if (menu.Bounds.Contains(cursorPos))
+        if (menu.Bounds.Contains(cursorPos) || IsCursorOverAnyVisibleSubmenu(menu, cursorPos))
         {
+            lastMouseMovementTime = DateTime.UtcNow;
             return;
         }
 
-        foreach (ToolStripDropDown submenu in openSubMenus)
+        TimeSpan idle = DateTime.UtcNow - lastMouseMovementTime;
+
+        if (idle.TotalSeconds >= 3.0)
         {
-            if (submenu.Bounds.Contains(cursorPos))
+            inAutoClose = true;
+
+            try
             {
-                return;
+                autoCloseTimer.Stop();
+                menu.Close();
+            }
+            finally
+            {
+                autoCloseTimer.Start();
+                inAutoClose = false;
             }
         }
-
-        menu.Close();
     }
 
     private static void OnMenuClosed(object sender, ToolStripDropDownClosedEventArgs e)
@@ -409,15 +508,8 @@ static class Program
         mouseCheckTimer.Stop();
         autoCloseTimer.Stop();
 
-        foreach (var submenu in openSubMenus)
-        {
-            submenu.Opened -= OnSubMenuOpenedInternal;
-            submenu.Closed -= OnSubMenuClosedInternal;
-        }
-
-        openSubMenus.Clear();
+        userEnteredMenu = false;
     }
-
 
     private static void OnWebClick(object sender, EventArgs e)
     {
@@ -550,9 +642,45 @@ static class Program
 
     private static void OnExitClick(object sender, EventArgs e)
     {
-        icon.Visible = false;
+        if (mouseCheckTimer != null)
+        {
+            mouseCheckTimer.Stop();
+            mouseCheckTimer.Tick -= OnMouseCheckTimerTick;
+            mouseCheckTimer.Dispose();
+            mouseCheckTimer = null;
+        }
+
+        if (autoCloseTimer != null)
+        {
+            autoCloseTimer.Stop();
+            autoCloseTimer.Tick -= OnAutoCloseTimerTick;
+            autoCloseTimer.Dispose();
+            autoCloseTimer = null;
+        }
+
+        if (icon != null)
+        {
+            icon.Visible = false;
+            icon.Dispose();
+            icon = null;
+        }
+
+        if (folderIcon != null)
+        {
+            folderIcon.Dispose();
+            folderIcon = null;
+        }
+
+        if (pinkIcon != null)
+        {
+            pinkIcon.Dispose();
+            pinkIcon = null;
+        }
+
+        ThemeHelpers.DisposeCachedImages();
         Application.Exit();
     }
+
 
     private static void OpenFolder(string path)
     {
@@ -596,47 +724,20 @@ static class Program
         }
     }
 
-    private static void TrackSubMenu(DarkToolStripMenuItem item, List<ToolStripDropDown> submenus)
+    private static void WarmUpAllDropDowns(ToolStripItemCollection items)
     {
-        item.DropDownOpened += (s, e) => OnSubMenuOpened(item, submenus);
-        item.DropDownClosed += (s, e) => OnSubMenuClosed(item, submenus);
-    }
-
-    private static void OnSubMenuOpenedInternal(object sender, EventArgs e)
-    {
-        var dropdown = sender as ToolStripDropDown;
-        if (dropdown != null && !openSubMenus.Contains(dropdown))
+        for (int i = 0; i < items.Count; i++)
         {
-            openSubMenus.Add(dropdown);
+            ToolStripMenuItem menuItem = items[i] as ToolStripMenuItem;
+
+            if (menuItem != null && menuItem.HasDropDownItems)
+            {
+                Control dummy = menuItem.DropDown;
+
+                WarmUpAllDropDowns(menuItem.DropDownItems);
+            }
         }
     }
-
-    private static void OnSubMenuClosedInternal(object sender, EventArgs e)
-    {
-        var dropdown = sender as ToolStripDropDown;
-        if (dropdown != null)
-        {
-            openSubMenus.Remove(dropdown);
-        }
-    }
-
-    private static void OnSubMenuOpened(DarkToolStripMenuItem item, List<ToolStripDropDown> submenus)
-    {
-        if (item.DropDown != null && !submenus.Contains(item.DropDown))
-        {
-            submenus.Add(item.DropDown);
-        }
-    }
-
-    private static void OnSubMenuClosed(DarkToolStripMenuItem item, List<ToolStripDropDown> submenus)
-    {
-        if (item.DropDown != null)
-        {
-            submenus.Remove(item.DropDown);
-        }
-    }
-
-
 
     private static void DisposeMenuItems(ToolStripItemCollection items)
     {

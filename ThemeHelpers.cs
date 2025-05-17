@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -232,14 +233,45 @@ public static class ThemeHelpers
         return new Font(SystemFonts.MenuFont.FontFamily, SystemFonts.MenuFont.Size * scaleFactor, SystemFonts.MenuFont.Style);
     }
 
+    private static readonly Dictionary<string, Image> _imageCache = new Dictionary<string, Image>();
+
     public static Image GetThemeImage(string baseName, string overrideSuffix = null)
     {
         string suffix = Config.AppTheme == Theme.Dark ? "_dark" : "";
-        string resourceName = "QuickFolders.Resources." + baseName + (overrideSuffix ?? suffix) + ".png";
+        string key = baseName + (overrideSuffix ?? suffix);
 
-        using (Stream stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName))
+        lock (_imageCache)
         {
-            return stream == null ? null : Image.FromStream(stream);
+            Image cached;
+            if (_imageCache.TryGetValue(key, out cached))
+            {
+                return cached;
+            }
+
+            string resourceName = "QuickFolders.Resources." + key + ".png";
+
+            Stream stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                return null;
+            }
+
+            Image img = Image.FromStream(stream);
+            _imageCache[key] = img;
+            return img;
         }
     }
+
+    public static void DisposeCachedImages()
+    {
+        lock (_imageCache)
+        {
+            foreach (var img in _imageCache.Values)
+            {
+                img.Dispose();
+            }
+            _imageCache.Clear();
+        }
+    }
+
 }
