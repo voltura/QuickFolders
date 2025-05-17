@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 [assembly: AssemblyVersion("1.0.1.0")]
@@ -25,6 +26,9 @@ static class Program
 
     [DllImport("user32.dll")]
     private static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
     static readonly object lockObject = new object();
@@ -129,7 +133,7 @@ static class Program
 
         mouseCheckTimer.Tick += OnMouseCheckTimerTick;
         autoCloseTimer.Tick += OnAutoCloseTimerTick;
-        autoCloseTimer.Enabled = true;
+        Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
 
         // define actions on mouse events
         menu.MouseEnter += OnMouseEnteredMenu;
@@ -210,6 +214,12 @@ static class Program
             menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
             menu.Focus();
             Application.DoEvents();
+
+            if (menu.Handle != IntPtr.Zero)
+            {
+                SetForegroundWindow(menu.Handle);
+            }
+
             isShowingMenu = false;
         }
 
@@ -367,6 +377,7 @@ static class Program
         theme.DropDownItems.Add(darkTheme);
         theme.DropDownItems.Add(lightTheme);
 
+        theme.MouseEnter += OnMenuItemWithChildrenMouseEnter;
         menuRoot.DropDownItems.Add(theme);
 
         DarkToolStripMenuItem fontSize = new DarkToolStripMenuItem("Font Size")
@@ -398,6 +409,7 @@ static class Program
         fontSize.DropDownItems.Add(mediumFont);
         fontSize.DropDownItems.Add(largeFont);
 
+        fontSize.MouseEnter += OnMenuItemWithChildrenMouseEnter;
         menuRoot.DropDownItems.Add(fontSize);
 
         DarkToolStripMenuItem exit = new DarkToolStripMenuItem("Exit")
@@ -410,7 +422,88 @@ static class Program
 
         menuRoot.DropDownItems.Add(exit);
 
+
         return menuRoot;
+    }
+
+    private static void OnMenuItemWithChildrenMouseEnter(object sender, EventArgs e)
+    {
+        ToolStripMenuItem current = sender as ToolStripMenuItem;
+
+        if (current == null)
+        {
+            return;
+        }
+
+        if (!current.DropDown.Visible && current.HasDropDownItems)
+        {
+            current.ShowDropDown();
+        }
+
+        CloseUnrelatedSubmenus(current);
+    }
+
+    private static void CloseUnrelatedSubmenus(ToolStripMenuItem keepOpenRoot)
+    {
+        if (menu == null)
+        {
+            return;
+        }
+
+        foreach (ToolStripItem item in menu.Items)
+        {
+            ToolStripMenuItem topItem = item as ToolStripMenuItem;
+
+            if (topItem == null)
+            {
+                continue;
+            }
+
+            if (!topItem.HasDropDownItems)
+            {
+                continue;
+            }
+
+            if (topItem == keepOpenRoot || IsDescendant(topItem, keepOpenRoot))
+            {
+                continue;
+            }
+
+            if (topItem.DropDown.Visible)
+            {
+                topItem.HideDropDown();
+            }
+        }
+    }
+
+    private static bool IsDescendant(ToolStripMenuItem root, ToolStripMenuItem target)
+    {
+        if (root == null || target == null)
+        {
+            return false;
+        }
+
+        foreach (ToolStripItem item in root.DropDownItems)
+        {
+            ToolStripMenuItem child = item as ToolStripMenuItem;
+
+            if (child == null)
+            {
+                continue;
+            }
+
+            if (child == target)
+            {
+                return true;
+            }
+
+            if (IsDescendant(child, target))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsCursorOverAnyVisibleSubmenu(Control parent, Point cursorPos)
@@ -465,7 +558,7 @@ static class Program
 
         if (!autoCloseTimer.Enabled)
         {
-            autoCloseTimer.Start();
+            Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
         }
     }
 
@@ -497,7 +590,7 @@ static class Program
             }
             finally
             {
-                autoCloseTimer.Start();
+                Task.Delay(100).ContinueWith(_ => autoCloseTimer.Start());
                 inAutoClose = false;
             }
         }
