@@ -66,7 +66,7 @@ static class Program
         {
             Icon = folderIcon,
             Visible = true,
-            Text = "QuickFolders"
+            Text = null
         };
 
         pinkIcon = CreateMarkedIcon(folderIcon);
