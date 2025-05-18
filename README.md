@@ -39,7 +39,9 @@ Perfect for improving workflow and reducing repetitive navigation.
 
 QuickFolders in action:
 
-<img width="574" alt="QuickFolders_v1 0 1 3" src="https://github.com/user-attachments/assets/f69bba17-42d0-4780-a08c-6df4f71395be" />
+<img width="1180" alt="QuickFolders v1.0.1.3 Dark Theme" src="https://github.com/user-attachments/assets/49b8730f-3553-483c-889b-b23ba3eeec20" />
+
+<img width="1198" alt="QuickFolders v1.0.1.3 Light Theme" src="https://github.com/user-attachments/assets/7af80bb9-ba22-4f7e-8997-6b9015b923a6" />
 
 ---
 
