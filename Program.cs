@@ -30,29 +30,28 @@ static class Program
 
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
     private static readonly object lockObject = new object();
-    private static DarkToolStripDropDownMenu menu;
+    private static CustomToolStripDropDownMenu menu;
     private static System.Windows.Forms.Timer mouseCheckTimer;
     private static System.Windows.Forms.Timer autoCloseTimer;
-    private static DarkToolStripMenuItem setDefaultAction;
-    private static DarkToolStripMenuItem startWithWindows;
-    private static DarkToolStripMenuItem systemTheme;
-    private static DarkToolStripMenuItem lightTheme;
-    private static DarkToolStripMenuItem darkTheme;
-    private static DarkToolStripMenuItem smallFont;
-    private static DarkToolStripMenuItem mediumFont;
-    private static DarkToolStripMenuItem largeFont;
+    private static CustomToolStripMenuItem setDefaultAction;
+    private static CustomToolStripMenuItem startWithWindows;
+    private static CustomToolStripMenuItem systemTheme;
+    private static CustomToolStripMenuItem lightTheme;
+    private static CustomToolStripMenuItem darkTheme;
+    private static CustomToolStripMenuItem smallFont;
+    private static CustomToolStripMenuItem mediumFont;
+    private static CustomToolStripMenuItem largeFont;
     private static NotifyIcon icon;
     private static bool isShowingMenu = false;
     private static bool inAutoClose = false;
-    private static bool userEnteredMenu = false;
     private static readonly FolderMenuItem[] recentFolderItems = new FolderMenuItem[5];
     private static Icon pinkIcon = null;
     private static Icon folderIcon = null;
-    private static DateTime lastMouseMovementTime = DateTime.UtcNow;
     private static HotKey hotKey;
     private static System.Windows.Forms.Timer hoverTimer;
     private static Point lastHoverPoint;
     private static DateTime hoverStartTime;
+    private static DateTime lastInputTime = DateTime.UtcNow;
 
     [STAThread]
     static void Main()
@@ -81,7 +80,7 @@ static class Program
 
         // create menu
         // -----------
-        menu = new DarkToolStripDropDownMenu
+        menu = new CustomToolStripDropDownMenu
         {
             ShowCheckMargin = false,
             ShowImageMargin = true,
@@ -98,7 +97,7 @@ static class Program
         // -----------------
 
         // header menu item
-        DarkToolStripMenuItem header = new DarkToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
+        CustomToolStripMenuItem header = new CustomToolStripMenuItem("QuickFolders by Voltura AB - " + Application.ProductVersion)
         {
             Image = ThemeHelpers.GetThemeImage("folder"),
             Tag = "folder",
@@ -147,7 +146,6 @@ static class Program
         // define actions on mouse events
         menu.MouseEnter += OnMouseEnteredMenu;
         menu.MouseLeave += OnMouseLeftMenu;
-        menu.Closed += OnMenuClosed;
         icon.MouseClick += OnIconClick;
         icon.MouseMove += OnIconHoverMove;
 
@@ -219,8 +217,7 @@ static class Program
             UpdateRecentFolderItems();
             menu.Font = ThemeHelpers.GetScaledMenuFont();
             ThemeHelpers.ApplyTheme(menu);
-            lastMouseMovementTime = DateTime.UtcNow;
-
+            
             menu.Show(TaskbarMenuPositioner.GetMenuPosition(menu.Size, icon, folderIcon, pinkIcon));
             menu.Focus();
             menu.Items[1].Select();
@@ -235,8 +232,14 @@ static class Program
             isShowingMenu = false;
         }
 
+        lastInputTime = DateTime.UtcNow;
         mouseCheckTimer.Start();
         autoCloseTimer.Start();
+    }
+
+    private static void OnMouseLeftMenu(object sender, EventArgs e)
+    {
+        lastInputTime = DateTime.UtcNow;
     }
 
     private static void OnMenuPreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -251,9 +254,8 @@ static class Program
 
     private static void ResetAutoClose()
     {
-        userEnteredMenu = true;
-        lastMouseMovementTime = DateTime.UtcNow;
-        
+        lastInputTime = DateTime.UtcNow;
+
         if (autoCloseTimer != null)
         {
             autoCloseTimer.Stop();
@@ -327,22 +329,10 @@ static class Program
         }
     }
 
-    private static void OnMouseLeftMenu(object sender, EventArgs e)
-    {
-        if (!menu.Visible)
-        {
-            userEnteredMenu = false;
-        }
-    }
-
+    
     private static void OnMouseEnteredMenu(object sender, EventArgs e)
     {
-        userEnteredMenu = true;
-    }
-
-    private static void OnIconMouseInteraction(object sender, MouseEventArgs e)
-    {
-        ShowMenu();
+        lastInputTime = DateTime.UtcNow;
     }
 
     private static void UpdateRecentFolderItems()
@@ -370,15 +360,15 @@ static class Program
         }
     }
 
-    private static DarkToolStripMenuItem BuildRootMenu()
+    private static CustomToolStripMenuItem BuildRootMenu()
     {
-        DarkToolStripMenuItem menuRoot = new DarkToolStripMenuItem("Menu")
+        CustomToolStripMenuItem menuRoot = new CustomToolStripMenuItem("Menu")
         {
             Image = ThemeHelpers.GetThemeImage("more"),
             Tag = "more"
         };
 
-        DarkToolStripMenuItem web = new DarkToolStripMenuItem("QuickFolders web site")
+        CustomToolStripMenuItem web = new CustomToolStripMenuItem("QuickFolders web site")
         {
             Image = ThemeHelpers.GetThemeImage("link"),
             Tag = "link"
@@ -388,14 +378,17 @@ static class Program
 
         menuRoot.DropDownItems.Add(web);
 
-        startWithWindows = new DarkToolStripMenuItem("Start with Windows")
+        bool doStartWithWindows = ProgramHelpers.StartWithWindows;
+
+        startWithWindows = new CustomToolStripMenuItem("Start with Windows")
         {
-            Image = ThemeHelpers.GetThemeImage("bolt"),
-            Checked = ProgramHelpers.StartWithWindows,
-            CheckOnClick = true
+            Image = doStartWithWindows ? null : ThemeHelpers.GetThemeImage("bolt"),
+            Checked = doStartWithWindows,
+            CheckOnClick = true,
+            Tag = "bolt"
         };
 
-        DarkToolStripMenuItem folderAction = new DarkToolStripMenuItem("Folder Action...")
+        CustomToolStripMenuItem folderAction = new CustomToolStripMenuItem("Folder Action...")
         {
             Image = ThemeHelpers.GetThemeImage("folder"),
             Tag = "folder"
@@ -405,7 +398,7 @@ static class Program
 
         menuRoot.DropDownItems.Add(folderAction);
 
-        setDefaultAction = new DarkToolStripMenuItem("Set Default Folder Action")
+        setDefaultAction = new CustomToolStripMenuItem("Set Default Folder Action")
         {
             Image = ThemeHelpers.GetThemeImage("exit"),
             Tag = "exit"
@@ -421,27 +414,27 @@ static class Program
 
         menuRoot.DropDownItems.Add(startWithWindows);
 
-        DarkToolStripMenuItem theme = new DarkToolStripMenuItem("Theme")
+        CustomToolStripMenuItem theme = new CustomToolStripMenuItem("Theme")
         {
             Image = ThemeHelpers.GetThemeImage("theme"),
             Tag = "theme"
         };
 
-        systemTheme = new DarkToolStripMenuItem(Theme.System.ToString())
+        systemTheme = new CustomToolStripMenuItem(Theme.System.ToString())
         {
             Image = ThemeHelpers.GetThemeImage("system"),
             Tag = "system",
             Checked = ThemeHelpers.Config.AppTheme == Theme.System
         };
 
-        darkTheme = new DarkToolStripMenuItem(Theme.Dark.ToString())
+        darkTheme = new CustomToolStripMenuItem(Theme.Dark.ToString())
         {
             Image = ThemeHelpers.GetThemeImage("darkmode"),
             Tag = "darkmode",
             Checked = ThemeHelpers.Config.AppTheme == Theme.Dark
         };
 
-        lightTheme = new DarkToolStripMenuItem(Theme.Light.ToString())
+        lightTheme = new CustomToolStripMenuItem(Theme.Light.ToString())
         {
             Image = ThemeHelpers.GetThemeImage("lightmode"),
             Tag = "lightmode",
@@ -459,23 +452,23 @@ static class Program
         theme.MouseEnter += OnMenuItemWithChildrenMouseEnter;
         menuRoot.DropDownItems.Add(theme);
 
-        DarkToolStripMenuItem fontSize = new DarkToolStripMenuItem("Font Size")
+        CustomToolStripMenuItem fontSize = new CustomToolStripMenuItem("Font Size")
         {
             Image = ThemeHelpers.GetThemeImage("system"),
             Tag = "system"
         };
 
-        smallFont = new DarkToolStripMenuItem(FontSize.Small.ToString())
+        smallFont = new CustomToolStripMenuItem(FontSize.Small.ToString())
         {
             Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Small
         };
 
-        mediumFont = new DarkToolStripMenuItem(FontSize.Medium.ToString())
+        mediumFont = new CustomToolStripMenuItem(FontSize.Medium.ToString())
         {
             Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Medium
         };
 
-        largeFont = new DarkToolStripMenuItem(FontSize.Large.ToString())
+        largeFont = new CustomToolStripMenuItem(FontSize.Large.ToString())
         {
             Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Large
         };
@@ -491,7 +484,7 @@ static class Program
         fontSize.DropDownOpening += OnMenuOpening;
         menuRoot.DropDownItems.Add(fontSize);
 
-        DarkToolStripMenuItem exit = new DarkToolStripMenuItem("Exit")
+        CustomToolStripMenuItem exit = new CustomToolStripMenuItem("Exit")
         {
             Image = ThemeHelpers.GetThemeImage("x"),
             Tag = "x"
@@ -625,34 +618,7 @@ static class Program
 
     private static void OnMouseCheckTimerTick(object sender, EventArgs e)
     {
-        if (!menu.Visible || inAutoClose == true || !userEnteredMenu)
-        {
-            return;
-        }
-
-        Point cursorPos = Cursor.Position;
-
-        if (menu.Bounds.Contains(cursorPos))
-        {
-            autoCloseTimer.Stop();
-            return;
-        }
-
-        if (IsCursorOverAnyVisibleSubmenu(menu, cursorPos))
-        {
-            autoCloseTimer.Stop();
-            return;
-        }
-
-        if (!autoCloseTimer.Enabled)
-        {
-            autoCloseTimer.Start();
-        }
-    }
-
-    private static void OnAutoCloseTimerTick(object sender, EventArgs e)
-    {
-        if (!menu.Visible || userEnteredMenu)
+        if (!menu.Visible || inAutoClose == true)
         {
             return;
         }
@@ -661,11 +627,28 @@ static class Program
 
         if (menu.Bounds.Contains(cursorPos) || IsCursorOverAnyVisibleSubmenu(menu, cursorPos))
         {
-            lastMouseMovementTime = DateTime.UtcNow;
+            lastInputTime = DateTime.UtcNow;
+            return;
+        }
+    }
+
+    private static void OnAutoCloseTimerTick(object sender, EventArgs e)
+    {
+        if (!menu.Visible)
+        {
             return;
         }
 
-        TimeSpan idle = DateTime.UtcNow - lastMouseMovementTime;
+        Point cursorPos = Cursor.Position;
+
+        if (menu.Bounds.Contains(cursorPos) || IsCursorOverAnyVisibleSubmenu(menu, cursorPos))
+        {
+            lastInputTime = DateTime.UtcNow;
+
+            return;
+        }
+
+        TimeSpan idle = DateTime.UtcNow - lastInputTime;
 
         if (idle.TotalSeconds >= 3.0)
         {
@@ -673,20 +656,13 @@ static class Program
 
             try
             {
-                autoCloseTimer.Stop();
                 menu.Close();
             }
             finally
             {
-                autoCloseTimer.Start();
                 inAutoClose = false;
             }
         }
-    }
-
-    private static void OnMenuClosed(object sender, ToolStripDropDownClosedEventArgs e)
-    {
-        userEnteredMenu = false;
     }
 
     private static void OnWebClick(object sender, EventArgs e)

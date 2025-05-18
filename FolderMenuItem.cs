@@ -1,4 +1,4 @@
-﻿sealed class FolderMenuItem : DarkToolStripMenuItem
+﻿sealed class FolderMenuItem : CustomToolStripMenuItem
 {
     private string _folderPath;
     public string FolderPath { get { return _folderPath; } set { _folderPath = value; } }
