@@ -232,7 +232,7 @@ public static class ThemeHelpers
             int x = target.Left + (target.Width - size) / 2;
             int y = target.Top + (target.Height - size) / 2;
 
-            return new Rectangle(x + 1, y, size, size);
+            return new Rectangle(x + (int)(2 * dpi / 96f), y, size, size);
         }
 
         private GraphicsPath CreateRoundedRectangle(Rectangle bounds, int radius)
