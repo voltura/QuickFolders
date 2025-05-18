@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("1.0.1.2")]
-[assembly: AssemblyFileVersion("1.0.1.2")]
-[assembly: AssemblyInformationalVersion("v1.0.1.2")]
+[assembly: AssemblyVersion("1.0.1.3")]
+[assembly: AssemblyFileVersion("1.0.1.3")]
+[assembly: AssemblyInformationalVersion("v1.0.1.3")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
@@ -382,16 +382,16 @@ static class Program
 
         startWithWindows = new CustomToolStripMenuItem("Start with Windows")
         {
-            Image = doStartWithWindows ? null : ThemeHelpers.GetThemeImage("bolt"),
+            Image = doStartWithWindows ? null : ThemeHelpers.GetThemeImage("start_with_windows"),
             Checked = doStartWithWindows,
             CheckOnClick = true,
-            Tag = "bolt"
+            Tag = "start_with_windows"
         };
 
         CustomToolStripMenuItem folderAction = new CustomToolStripMenuItem("Folder Action...")
         {
-            Image = ThemeHelpers.GetThemeImage("folder"),
-            Tag = "folder"
+            Image = ThemeHelpers.GetThemeImage("folder_action"),
+            Tag = "folder_action"
         };
 
         folderAction.Click += OnFolderActionClick;
@@ -400,8 +400,8 @@ static class Program
 
         setDefaultAction = new CustomToolStripMenuItem("Set Default Folder Action")
         {
-            Image = ThemeHelpers.GetThemeImage("exit"),
-            Tag = "exit"
+            Image = ThemeHelpers.GetThemeImage("folder"),
+            Tag = "folder"
         };
 
         setDefaultAction.Click += OnSetDefaultActionClick;
@@ -422,8 +422,8 @@ static class Program
 
         systemTheme = new CustomToolStripMenuItem(Theme.System.ToString())
         {
-            Image = ThemeHelpers.GetThemeImage("system"),
-            Tag = "system",
+            Image = ThemeHelpers.GetThemeImage("theme"),
+            Tag = "theme",
             Checked = ThemeHelpers.Config.AppTheme == Theme.System
         };
 
@@ -454,23 +454,29 @@ static class Program
 
         CustomToolStripMenuItem fontSize = new CustomToolStripMenuItem("Font Size")
         {
-            Image = ThemeHelpers.GetThemeImage("system"),
-            Tag = "system"
+            Image = ThemeHelpers.GetThemeImage("fontsize"),
+            Tag = "fontsize"
         };
 
         smallFont = new CustomToolStripMenuItem(FontSize.Small.ToString())
         {
-            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Small
+            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Small,
+            Image = ThemeHelpers.GetThemeImage("small_font"),
+            Tag = "small_font"
         };
 
         mediumFont = new CustomToolStripMenuItem(FontSize.Medium.ToString())
         {
-            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Medium
+            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Medium,
+            Image = ThemeHelpers.GetThemeImage("medium_font"),
+            Tag = "medium_font"
         };
 
         largeFont = new CustomToolStripMenuItem(FontSize.Large.ToString())
         {
-            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Large
+            Checked = ThemeHelpers.Config.MenuFontSize == FontSize.Large,
+            Image = ThemeHelpers.GetThemeImage("large_font"),
+            Tag = "large_font"
         };
 
         smallFont.Click += OnSmallFontClick;
