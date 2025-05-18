@@ -1,7 +1,13 @@
 @ECHO OFF
 SETLOCAL
 
-SET CSC="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+SET "SCRIPT_DIR=%~dp0"
+SET "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+SET "MT=C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\mt.exe"
+SET "MAKE_NSIS=C:\Program Files (x86)\NSIS\makensis.exe"
+SET "SETUP_EXE=QuickFolders-Setup.exe"
+SET "RC=C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\rc.exe"
+SET "CSC=%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\csc.exe"
 SET SRC=^
 Config.cs ^
 FolderMenuItem.cs ^
@@ -9,15 +15,17 @@ FontSize.cs ^
 HotKey.cs ^
 Program.cs ^
 ProgramHelpers.cs ^
+RecentFolderProvider.cs ^
 TaskbarMenuPositioner.cs ^
 Theme.cs ^
 ThemeHelpers.cs
 
 SET OUT=QuickFolders.exe
 SET RES=QuickFolders.res
-SET VB="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dll"
+SET "VB=%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dll"
+SET "FART=%SCRIPT_DIR%\Tools\fart.exe"
 
-"C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\rc.exe" QuickFolders.rc
+"%RC%" QuickFolders.rc
 
 IF EXIST %OUT% (
     ECHO Cleaning up existing %OUT%...
@@ -26,7 +34,7 @@ IF EXIST %OUT% (
 
 ECHO Compiling %OUT%...
 
-%CSC% /unsafe /nologo /target:winexe /platform:x86 /optimize+ /debug- /nowarn:1591 /filealign:512 /win32res:%RES% /main:Program /out:%OUT% /reference:%VB% ^
+"%CSC%" /unsafe /nologo /target:winexe /platform:x86 /optimize+ /debug- /nowarn:1591 /filealign:512 /win32res:%RES% /main:Program /out:%OUT% /reference:%VB% ^
 /resource:Resources\1.png,QuickFolders.Resources.1.png ^
 /resource:Resources\2.png,QuickFolders.Resources.2.png ^
 /resource:Resources\3.png,QuickFolders.Resources.3.png ^
@@ -69,11 +77,16 @@ ECHO Build complete. Final file size:
 FOR %%F IN (%OUT%) DO ECHO %%~zF bytes
 
 ECHO Injecting application manifest to make application DPI aware.
-"C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\mt.exe" -manifest app.manifest -outputresource:QuickFolders.exe;#1
+"%MT%" -manifest app.manifest -outputresource:QuickFolders.exe;#1
+
+IF EXIST %SETUP_EXE% (
+    ECHO Cleaning up existing %SETUP_EXE%...
+    DEL /F /Q %SETUP_EXE%
+)
 
 ECHO Creating installer
-"C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+"%MAKE_NSIS%" installer.nsi
 
-START QuickFolders-Setup.exe
+START %SETUP_EXE%
 
 ENDLOCAL
