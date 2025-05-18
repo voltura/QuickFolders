@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("1.0.1.1")]
-[assembly: AssemblyFileVersion("1.0.1.1")]
-[assembly: AssemblyInformationalVersion("v1.0.1.1")]
+[assembly: AssemblyVersion("1.0.1.2")]
+[assembly: AssemblyFileVersion("1.0.1.2")]
+[assembly: AssemblyInformationalVersion("v1.0.1.2")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]

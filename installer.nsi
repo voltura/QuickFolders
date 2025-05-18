@@ -1,4 +1,4 @@
-ManifestDPIAware true
+﻿ManifestDPIAware true
 ManifestSupportedOS Win10
 SetCompressor /SOLID lzma
 SetCompressorDictSize 128
@@ -9,7 +9,7 @@ SetCompressorDictSize 128
 
 !define APPNAME "QuickFolders"
 !define COMPANY "Voltura AB"
-!define VERSION "1.0.1.1"
+!define VERSION "1.0.1.2"
 !define INSTALLDIR "$LOCALAPPDATA\${APPNAME}"
 !define APPDATADIR "$APPDATA\${APPNAME}"
 

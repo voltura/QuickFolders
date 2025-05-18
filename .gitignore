@@ -371,3 +371,4 @@ FodyWeavers.xsd
 *.exe
 /TODO.MD
 /QuickFolders.res
+/cert_pwd.bat

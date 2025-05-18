@@ -163,15 +163,9 @@ public static class ThemeHelpers
             }
         }
 
-
         protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            using (Brush clear = new SolidBrush(Color.FromArgb(32, 32, 32)))
-            {
-                e.Graphics.FillRectangle(clear, e.ArrowRectangle);
-            }
 
             int size = GetScaledArrowSize(e.Graphics.DpiX);
             Rectangle rect = e.ArrowRectangle;
@@ -179,17 +173,19 @@ public static class ThemeHelpers
 
             Point[] arrow =
             {
-                new Point(middle.X - size / 2, middle.Y - size),
+                new Point(middle.X - size / 2, middle.Y - size / 2),
                 new Point(middle.X + size / 2, middle.Y),
-                new Point(middle.X - size / 2, middle.Y + size)
+                new Point(middle.X - size / 2, middle.Y + size / 2)
             };
 
             Color arrowColor = (!e.Item.Enabled) ? Color.DimGray :
                                (e.Item.Selected) ? Color.White : Color.Gainsboro;
 
             using (Brush brush = new SolidBrush(arrowColor))
+            using (Pen edge = new Pen(Color.FromArgb(60, 60, 60)))
             {
                 e.Graphics.FillPolygon(brush, arrow);
+                e.Graphics.DrawPolygon(edge, arrow);
             }
         }
 
@@ -263,7 +259,7 @@ public static class ThemeHelpers
 
         private int GetScaledArrowSize(float dpi)
         {
-            return (int)(6 * dpi / 96f);
+            return (int)(8 * dpi / 96f);
         }
     }
 
@@ -320,28 +316,25 @@ public static class ThemeHelpers
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            using (Brush clear = new SolidBrush(Color.WhiteSmoke))
-            {
-                e.Graphics.FillRectangle(clear, e.ArrowRectangle);
-            }
-
             int size = GetScaledArrowSize(e.Graphics.DpiX);
             Rectangle rect = e.ArrowRectangle;
             Point middle = new Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2);
 
             Point[] arrow =
             {
-                new Point(middle.X - size / 2, middle.Y - size),
+                new Point(middle.X - size / 2, middle.Y - size / 2),
                 new Point(middle.X + size / 2, middle.Y),
-                new Point(middle.X - size / 2, middle.Y + size)
+                new Point(middle.X - size / 2, middle.Y + size / 2)
             };
 
             Color arrowColor = (!e.Item.Enabled) ? Color.LightGray :
                                (e.Item.Selected) ? Color.Black : Color.DarkGray;
 
             using (Brush brush = new SolidBrush(arrowColor))
+            using (Pen edge = new Pen(Color.FromArgb(220, 220, 220)))
             {
                 e.Graphics.FillPolygon(brush, arrow);
+                e.Graphics.DrawPolygon(edge, arrow);
             }
         }
 
@@ -408,7 +401,7 @@ public static class ThemeHelpers
 
         private int GetScaledArrowSize(float dpi)
         {
-            return (int)(6 * dpi / 96f);
+            return (int)(8 * dpi / 96f);
         }
     }
 
