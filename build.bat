@@ -21,7 +21,7 @@ SET "VB=%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\Microsoft.VisualBasic.dl
 SET UPDATE_VER=%1
 
 :: ─────────────────────────────────────────────────────────────────────────
-::   Collect .CS files to be compiled
+::   Collect C# files to be compiled
 :: ─────────────────────────────────────────────────────────────────────────
 
 SET "SRC="
@@ -55,23 +55,23 @@ FOR %%F IN (Resources\*.png) DO (
 :: ─────────────────────────────────────────────────────────────────────────
 
 IF NOT EXIST "%MT%" (
-	CALL :ERROR_MESSAGE_EXIT "mt.exe not found at %MT%." 11
+    CALL :ERROR_MESSAGE_EXIT "mt.exe not found at %MT%." 11
 )
 
 IF NOT EXIST "%MAKE_NSIS%" (
-	CALL :ERROR_MESSAGE_EXIT "makensis.exe not found at %MAKE_NSIS%." 12
+    CALL :ERROR_MESSAGE_EXIT "makensis.exe not found at %MAKE_NSIS%." 12
 )
 
 IF NOT EXIST "%RC%" (
-	CALL :ERROR_MESSAGE_EXIT "rc.exe not found at %RC%." 13
+    CALL :ERROR_MESSAGE_EXIT "rc.exe not found at %RC%." 13
 )
 
 IF NOT EXIST "%CSC%" (
-	CALL :ERROR_MESSAGE_EXIT "csc.exe not found at %CSC%." 14
+    CALL :ERROR_MESSAGE_EXIT "csc.exe not found at %CSC%." 14
 )
 
 IF NOT EXIST "%VB%" (
-	CALL :ERROR_MESSAGE_EXIT "Microsoft.VisualBasic.dll not found at %VB%." 15
+    CALL :ERROR_MESSAGE_EXIT "Microsoft.VisualBasic.dll not found at %VB%." 15
 )
 
 :: ─────────────────────────────────────────────────────────────────────────
@@ -153,8 +153,8 @@ CALL :DISP_MSG "Creating resource file..." 0
 :: ─────────────────────────────────────────────────────────────────────────
 
 IF EXIST "%OUT%" (
-	CALL :DISP_MSG "Cleaning up existing %OUT%..." 0
-	TASKKILL /F /IM QuickFolders.exe >NUL 2>&1
+    CALL :DISP_MSG "Cleaning up existing %OUT%..." 0
+    TASKKILL /F /IM QuickFolders.exe >NUL 2>&1
     DEL /F /Q "%OUT%"
 )
 
@@ -165,7 +165,7 @@ CALL :DISP_MSG "Compiling %OUT%..." 0
 %SRC%
 
 IF NOT EXIST "%OUT%" (
-	CALL :ERROR_MESSAGE_EXIT "Build failed." 20
+    CALL :ERROR_MESSAGE_EXIT "Build failed." 20
 )
 
 FOR %%F IN (%OUT%) DO CALL :DISP_MSG "Build complete. Final file size of %OUT%: %%~zF bytes" 0
@@ -239,7 +239,7 @@ FOR %%F IN (*.exe) DO (
 CALL :DISP_MSG "SHA-512 checksums written to %SHA_OUT%" 0
 
 :: ─────────────────────────────────────────────────────────────────────────
-::   Create checksum file
+::   Run installer
 :: ─────────────────────────────────────────────────────────────────────────
 
 CALL :DISP_MSG "Running installer %SETUP_EXE%..." 2
@@ -254,24 +254,24 @@ EXIT /B 0
 :: ─────────────────────────────────────────────────────────────────────────
 
 :ERROR_MESSAGE_EXIT
-	SET MSG=%1
-	SET MSG=%MSG:~1,-1%
-	SET MSG=%DATE% %TIME% - %MSG%
-	SET CODE=%2
-	COLOR 4F
-	ECHO.
-	ECHO   CODE:  %CODE%
-	ECHO   ERROR: !MSG!
-	ECHO   Press any key to end...
-	PAUSE >NUL
-	EXIT %CODE%
+    SET MSG=%1
+    SET MSG=%MSG:~1,-1%
+    SET MSG=%DATE% %TIME% - %MSG%
+    SET CODE=%2
+    COLOR 4F
+    ECHO.
+    ECHO   CODE:  %CODE%
+    ECHO   ERROR: !MSG!
+    ECHO   Press any key to end...
+    PAUSE >NUL
+    EXIT %CODE%
 
 :DISP_MSG
-	SET MSG=%1
-	SET MSG=%MSG:~1,-1%
+    SET MSG=%1
+    SET MSG=%MSG:~1,-1%
     SET MSG=%DATE% %TIME% - %MSG%
-	SET /A DELAY_SEC=%2+1
-	ECHO.
-	ECHO   !MSG!
-	TIMEOUT /T %DELAY_SEC% /NOBREAK >NUL
-	GOTO :EOF
+    SET /A DELAY_SEC=%2+1
+    ECHO.
+    ECHO   !MSG!
+    TIMEOUT /T %DELAY_SEC% /NOBREAK >NUL
+    GOTO :EOF
