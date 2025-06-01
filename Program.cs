@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("1.0.1.3")]
-[assembly: AssemblyFileVersion("1.0.1.3")]
-[assembly: AssemblyInformationalVersion("v1.0.1.3")]
+[assembly: AssemblyVersion("1.0.1.4")]
+[assembly: AssemblyFileVersion("1.0.1.4")]
+[assembly: AssemblyInformationalVersion("v1.0.1.4")]
 [assembly: AssemblyCompany("Voltura AB")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCopyright("© 2025 Voltura AB")]
@@ -181,6 +181,17 @@ static class Program
         if (menu.Visible || isShowingMenu)
         {
             hoverTimer.Stop();
+
+            return;
+        }
+
+        Point current = Cursor.Position;
+
+        if (Math.Abs(current.X - lastHoverPoint.X) > 2 || Math.Abs(current.Y - lastHoverPoint.Y) > 2)
+        {
+            hoverTimer.Stop();
+            hoverStartTime = DateTime.MinValue;
+
             return;
         }
 
@@ -188,19 +199,8 @@ static class Program
 
         if (hoverDuration.TotalMilliseconds >= 400)
         {
-            Point current = Cursor.Position;
-
-            if (Math.Abs(current.X - lastHoverPoint.X) <= 2 &&
-                Math.Abs(current.Y - lastHoverPoint.Y) <= 2)
-            {
-                hoverTimer.Stop();
-                ShowMenu();
-            }
-            else
-            {
-                lastHoverPoint = current;
-                hoverStartTime = DateTime.UtcNow;
-            }
+            hoverTimer.Stop();
+            ShowMenu();
         }
     }
 
